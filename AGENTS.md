@@ -90,15 +90,6 @@ Dashboard 本地 `packages/dashboard/tsconfig.json` 还定义：`@/*` → `src/*
 - 内存数据库测试使用 `new Database(":memory:")` + `runMigrations(db)`。
 - Biome 作用域是 `packages/*/src/**`，测试不检查；Vue 文件有未用变量/导入 override。
 
-## 新增事件类型 checklist
-
-1. 在 `packages/shared/src/types/events.ts` 更新 `StatsEvent` 联合类型。
-2. 在 `packages/engine/src/event/converters/` 新增转换器，导出 `eventType` 和 `convert`。
-3. 在 `packages/engine/src/event/converter.ts` 的 `REGISTERED` 中注册。
-4. 如需投影，更新 `packages/engine/src/projection/` 对应 handler 的 `handles`。
-5. 如需新列，新增 `packages/engine/src/db/migrations/` 迁移并更新 schema。
-6. 在 `packages/engine/tests/event/` 添加转换器测试，必要时补投影/API 测试。
-
 ## 设计文档索引
 
 详细说明不要堆在本文件，按需阅读：

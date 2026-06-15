@@ -7,7 +7,7 @@
     <button
       class="nav-hamburger"
       data-testid="nav-hamburger"
-      aria-label="切换导航菜单"
+      :aria-label="$t('nav.toggleMenu')"
       @click="menuOpen = !menuOpen"
     >
       {{ menuOpen ? '✕' : '☰' }}
@@ -25,9 +25,17 @@
       </router-link>
     </div>
     <div class="nav-badges">
-      <span class="audit-badge" title="所有工具调用均被完整记录">审计完整</span>
-      <span class="privacy-badge" title="数据仅存储在本地，不会上传到云端">本地隐私</span>
+      <span class="audit-badge" :title="$t('nav.auditCompleteTitle')">{{ $t('nav.auditComplete') }}</span>
+      <span class="privacy-badge" :title="$t('nav.localPrivacyTitle')">{{ $t('nav.localPrivacy') }}</span>
     </div>
+    <button
+      class="lang-toggle"
+      data-testid="lang-toggle"
+      :aria-label="$t('nav.langToggleLabel')"
+      @click="handleToggleLocale"
+    >
+      {{ currentLocale === 'zh-CN' ? 'EN' : 'ZH' }}
+    </button>
     <div class="nav-status">
       <div class="realtime-status" :class="realtimeClass" :data-testid="`realtime-${realtimeMode}`">
         <span class="status-dot" :class="dotClass"></span>
@@ -39,11 +47,11 @@
         data-testid="reconnect-btn"
         @click="$emit('reconnect')"
       >
-        重新连接
+        {{ $t('nav.reconnect') }}
       </button>
       <span v-if="formattedUpdatedAt" class="data-updated-at" data-testid="data-updated-at">
-        数据更新时间: {{ formattedUpdatedAt }}
-        <span v-if="refreshing" class="refreshing-indicator">刷新中</span>
+        {{ $t('nav.dataUpdatedAt', { time: formattedUpdatedAt }) }}
+        <span v-if="refreshing" class="refreshing-indicator">{{ $t('nav.refreshing') }}</span>
       </span>
     </div>
   </nav>
@@ -51,8 +59,14 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import type { RealtimeMode } from "../composables/useSSE";
-import { formatTimestamp } from "../utils/timezone";
+import { useI18n } from "vue-i18n";
+import type { RealtimeMode } from "@/composables/useSSE";
+import i18n from "@/i18n";
+import type { SupportedLocale } from "@/i18n/composables/useLocale";
+import { setLocale } from "@/i18n/composables/useLocale";
+import { formatTimestamp } from "@/utils/timezone";
+
+const { t } = useI18n();
 
 const props = defineProps<{
   realtimeMode: RealtimeMode;
@@ -68,14 +82,24 @@ defineEmits<{
 
 const menuOpen = ref(false);
 
-const links = [
-  { to: "/", label: "概览", testId: "overview" },
-  { to: "/efficiency", label: "效率分析", testId: "efficiency" },
-  { to: "/models", label: "模型对比", testId: "models" },
-  { to: "/projects", label: "项目对比", testId: "projects" },
-  { to: "/tools", label: "工具统计", testId: "tools" },
-  { to: "/sessions", label: "会话", testId: "sessions" },
-];
+const links = computed(() => [
+  { to: "/", label: t("nav.overview"), testId: "overview" },
+  { to: "/efficiency", label: t("nav.efficiency"), testId: "efficiency" },
+  { to: "/models", label: t("nav.models"), testId: "models" },
+  { to: "/projects", label: t("nav.projects"), testId: "projects" },
+  { to: "/tools", label: t("nav.tools"), testId: "tools" },
+  { to: "/sessions", label: t("nav.sessions"), testId: "sessions" },
+]);
+
+const currentLocale = computed(
+  () => i18n.global.locale.value as SupportedLocale,
+);
+
+function handleToggleLocale(): void {
+  const next: SupportedLocale =
+    currentLocale.value === "zh-CN" ? "en-US" : "zh-CN";
+  setLocale(i18n, next);
+}
 
 const realtimeClass = computed(() => `realtime-${props.realtimeMode}`);
 const dotClass = computed(() => {
@@ -91,11 +115,11 @@ const dotClass = computed(() => {
 const statusLabel = computed(() => {
   switch (props.realtimeMode) {
     case "sse":
-      return "Live";
+      return t("nav.statusLive");
     case "polling":
-      return "Polling";
+      return t("nav.statusPolling");
     case "disconnected":
-      return "Offline";
+      return t("nav.statusOffline");
   }
 });
 
@@ -293,6 +317,25 @@ const formattedUpdatedAt = computed<string | null>(() => {
   background-color: var(--primary);
 }
 
+.lang-toggle {
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--primary);
+  background: transparent;
+  border: 1px solid var(--primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  letter-spacing: 0.02em;
+}
+
+.lang-toggle:hover {
+  background-color: var(--primary);
+  color: white;
+}
+
 /* ── Mobile: hamburger menu ───────────────────────────────────────── */
 
 @media (max-width: 767px) {
@@ -321,7 +364,8 @@ const formattedUpdatedAt = computed<string | null>(() => {
     display: flex;
   }
 
-  .nav-badges {
+  .nav-badges,
+  .lang-toggle {
     display: none;
   }
 

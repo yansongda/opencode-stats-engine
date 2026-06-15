@@ -9,13 +9,14 @@
 import { isStatsNotification, SSE_EVENT_NAME } from "@opencode-stats/shared";
 import { type ComputedRef, computed, type Ref, ref } from "vue";
 import { useRouter } from "vue-router";
-import { connectSSE } from "../api/client";
-import { useEfficiencyStore } from "../stores/efficiency";
-import { useModelsStore } from "../stores/models";
-import { useOverviewStore } from "../stores/overview";
-import { useProjectsStore } from "../stores/projects";
-import { useSessionsStore } from "../stores/sessions";
-import { useToolsStore } from "../stores/tools";
+import { connectSSE } from "@/api/client";
+import i18n from "@/i18n";
+import { useEfficiencyStore } from "@/stores/efficiency";
+import { useModelsStore } from "@/stores/models";
+import { useOverviewStore } from "@/stores/overview";
+import { useProjectsStore } from "@/stores/projects";
+import { useSessionsStore } from "@/stores/sessions";
+import { useToolsStore } from "@/stores/tools";
 
 // ============================================================================
 // Types
@@ -214,13 +215,15 @@ export function useSSE(): UseSSEReturn {
   const statusLabel = computed<string>(() => {
     switch (connectionState.value) {
       case "disconnected":
-        return "连接断开";
+        return i18n.global.t("common.sseDisconnected");
       case "reconnecting":
-        return "正在重连";
+        return i18n.global.t("common.sseReconnecting");
       case "connecting":
-        return "连接中";
+        return i18n.global.t("common.sseConnecting");
       case "connected":
-        return hasNewData.value ? "有新数据" : "数据已同步";
+        return hasNewData.value
+          ? i18n.global.t("common.sseHasNewData")
+          : i18n.global.t("common.sseSynced");
     }
   });
 

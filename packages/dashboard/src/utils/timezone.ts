@@ -1,10 +1,16 @@
+import i18n from "@/i18n";
+
 export type TimeRange = "1d" | "7d" | "30d" | "all";
 
 export function getBrowserTimezone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
-export function formatRelativeTimeFromDate(date: Date): string {
+export function formatRelativeTimeFromDate(
+  date: Date,
+  locale?: string,
+): string {
+  const t = i18n.global.t;
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffSec = Math.floor(diffMs / 1000);
@@ -12,12 +18,13 @@ export function formatRelativeTimeFromDate(date: Date): string {
   const diffHour = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHour / 24);
 
-  if (diffSec < 60) return "刚刚";
-  if (diffMin < 60) return `${diffMin} 分钟前`;
-  if (diffHour < 24) return `${diffHour} 小时前`;
-  if (diffDay < 7) return `${diffDay} 天前`;
+  if (diffSec < 60) return t("common.justNow");
+  if (diffMin < 60) return t("common.minutesAgo", { minutes: diffMin });
+  if (diffHour < 24) return t("common.hoursAgo", { hours: diffHour });
+  if (diffDay < 7) return t("common.daysAgo", { days: diffDay });
 
-  return new Intl.DateTimeFormat("zh-CN", {
+  const loc = locale ?? i18n.global.locale.value ?? "en-US";
+  return new Intl.DateTimeFormat(loc, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -65,9 +72,11 @@ function todayLocalRangeMs(tz: string): { start: number; end: number } {
 
 export function formatTimestamp(
   ms: number | null | undefined,
-  opts?: { withSeconds?: boolean },
+  opts?: { withSeconds?: boolean; locale?: string; placeholder?: string },
 ): string {
-  if (ms == null || Number.isNaN(ms)) return "—";
+  const placeholder = opts?.placeholder ?? "—";
+  if (ms == null || Number.isNaN(ms)) return placeholder;
+  const loc = opts?.locale ?? i18n.global.locale.value ?? "en-US";
   const fmtOpts: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "2-digit",
@@ -78,12 +87,17 @@ export function formatTimestamp(
     timeZone: getBrowserTimezone(),
   };
   if (opts?.withSeconds) fmtOpts.second = "2-digit";
-  return new Intl.DateTimeFormat("zh-CN", fmtOpts).format(ms);
+  return new Intl.DateTimeFormat(loc, fmtOpts).format(ms);
 }
 
-export function formatTimestampShort(ms: number | null | undefined): string {
-  if (ms == null || Number.isNaN(ms)) return "—";
-  return new Intl.DateTimeFormat("zh-CN", {
+export function formatTimestampShort(
+  ms: number | null | undefined,
+  opts?: { locale?: string; placeholder?: string },
+): string {
+  const placeholder = opts?.placeholder ?? "—";
+  if (ms == null || Number.isNaN(ms)) return placeholder;
+  const loc = opts?.locale ?? i18n.global.locale.value ?? "en-US";
+  return new Intl.DateTimeFormat(loc, {
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",

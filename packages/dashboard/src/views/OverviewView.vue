@@ -3,7 +3,7 @@
         <!-- Loading State (initial no-data only) -->
         <LoadingState
             v-if="loading && !overview"
-            message="加载统计数据中..."
+            :message="$t('overview.loading')"
             test-id="overview-loading"
         />
 
@@ -11,9 +11,9 @@
         <EmptyState
             v-else-if="error && !overview"
             variant="error"
-            title="数据加载失败"
+            :title="$t('common.dataLoadFailed')"
             :description="error"
-            action-label="重试"
+            :action-label="$t('common.retry')"
             test-id="overview-error"
             @action="retryFetch"
         />
@@ -21,8 +21,8 @@
         <!-- Empty State -->
         <EmptyState
             v-else-if="!overview"
-            title="暂无统计数据"
-            description="开始使用 OpenCode 后，统计数据将自动显示在这里"
+            :title="$t('overview.noStatsData')"
+            :description="$t('common.noDataDesc')"
             test-id="overview-empty"
         />
 
@@ -30,60 +30,60 @@
         <template v-else>
             <!-- Page Header -->
             <div class="view-header resp-header">
-                <h1 class="view-title">概览</h1>
+                <h1 class="view-title">{{ $t('overview.title') }}</h1>
                 <TimeRangePicker v-model="selectedPeriod" />
             </div>
 
             <!-- Metric Cards -->
             <div class="metrics-row resp-metrics-5" data-testid="metrics-row">
                 <MetricCard
-                    label="总会话"
+                    :label="$t('overview.totalSessions')"
                     :value="overview?.total_sessions ?? 0"
-                    secondary-label="总消息数"
+                    :secondary-label="$t('overview.totalMessages')"
                     :secondary-value="overview?.total_messages ?? 0"
-                    :subtitle="`${overview?.active_sessions ?? 0} 活跃 · ${overview?.deleted_sessions ?? 0} 已删除`"
+                    :subtitle="$t('overview.sessionsSubtitle', { active: overview?.active_sessions ?? 0, deleted: overview?.deleted_sessions ?? 0 })"
                     test-id="metric-sessions"
                 />
                 <MetricCard
-                    label="总 Token"
+                    :label="$t('overview.totalTokens')"
                     :value="formatTokens(overview?.total_tokens ?? 0)"
-                    secondary-label="成本"
+                    :secondary-label="$t('common.cost')"
                     :secondary-value="formatCost(overview?.total_cost_usd ?? 0)"
-                    :subtitle="`入 ${formatTokens(overview?.input_tokens ?? 0)} · 出 ${formatTokens(overview?.output_tokens ?? 0)}`"
+                    :subtitle="$t('overview.tokensSubtitle', { input: formatTokens(overview?.input_tokens ?? 0), output: formatTokens(overview?.output_tokens ?? 0) })"
                     test-id="metric-tokens"
                 />
                 <MetricCard
-                    label="平均项目 Token"
+                    :label="$t('overview.avgProjectTokens')"
                     :value="formatTokens(avgProjectTokens)"
-                    secondary-label="成本"
+                    :secondary-label="$t('common.cost')"
                     :secondary-value="formatCost(avgProjectCost)"
-                    :subtitle="`平均 ${formatNumber(avgProjectMessages)} 消息 / 项目`"
+                    :subtitle="$t('overview.avgProjectSubtitle', { count: formatNumber(avgProjectMessages) })"
                     test-id="metric-avg-cost"
                 />
                 <MetricCard
-                    label="工具调用"
+                    :label="$t('overview.toolCalls')"
                     :value="overview?.total_tool_calls ?? 0"
-                    :subtitle="`错误 ${overview?.total_tool_errors ?? 0} · 成功率 ${toolSuccessRate}%`"
+                    :subtitle="$t('overview.toolCallsSubtitle', { errors: overview?.total_tool_errors ?? 0, rate: toolSuccessRate })"
                     test-id="metric-tools"
                 />
                 <MetricCard
-                    label="变更代码"
+                    :label="$t('overview.codeChanges')"
                     :value="
                         (
                             (overview?.lines_added ?? 0) -
                             (overview?.lines_deleted ?? 0)
                         ).toLocaleString()
                     "
-                    secondary-label="变更文件"
+                    :secondary-label="$t('overview.changedFiles')"
                     :secondary-value="overview?.files_changed ?? 0"
-                    :subtitle="`+${overview?.lines_added ?? 0} 行 · -${overview?.lines_deleted ?? 0} 行`"
+                    :subtitle="$t('overview.codeChangesSubtitle', { added: overview?.lines_added ?? 0, deleted: overview?.lines_deleted ?? 0 })"
                     test-id="metric-code"
                 />
             </div>
 
             <!-- Usage Trend (dual y-axis: Token left, Messages right) -->
             <div class="trend-section" data-testid="trend-section">
-                <h3 class="section-title">使用趋势</h3>
+                <h3 class="section-title">{{ $t('overview.usageTrend') }}</h3>
                 <LineChart
                     :x-data="trendDates"
                     :series="trendSeries"
@@ -92,7 +92,7 @@
                     :show-area="true"
                     y-label="Token"
                     :value-formatter="formatTokens"
-                    right-y-label="消息"
+                    :right-y-label="$t('overview.messages')"
                     :right-value-formatter="formatNumber"
                 />
             </div>
@@ -100,8 +100,8 @@
             <!-- Working Hour Heatmap -->
             <div class="chart-card" data-testid="working-hour-heatmap">
                 <div class="chart-card-header">
-                    <h3 class="chart-card-title">工作时段分布</h3>
-                    <span class="chart-card-subtitle">消息活跃度按小时 × 星期</span>
+                    <h3 class="chart-card-title">{{ $t('overview.workHoursDistribution') }}</h3>
+                    <span class="chart-card-subtitle">{{ $t('overview.workHoursSubtitle') }}</span>
                 </div>
                 <HeatmapChart
                     :data="heatmapData"
@@ -115,12 +115,12 @@
             <!-- Model Distribution: cost + messages in one card -->
             <div class="chart-card" data-testid="model-distribution">
                 <div class="chart-card-header">
-                    <h3 class="chart-card-title">模型分布</h3>
-                    <span class="chart-card-subtitle">成本分布仅显示成本最高的 5 个模型，消息分布显示全部有消息的模型</span>
+                    <h3 class="chart-card-title">{{ $t('overview.modelDistribution') }}</h3>
+                    <span class="chart-card-subtitle">{{ $t('overview.modelDistributionSubtitle') }}</span>
                 </div>
                 <EmptyState
                     v-if="modelCostPieRawData.length === 0 && modelMessagePieRawData.length === 0"
-                    title="暂无模型数据"
+                    :title="$t('overview.noModelData')"
                     data-testid="model-distribution-empty"
                 />
                 <template v-else>
@@ -135,7 +135,7 @@
                             class="legend-item"
                             :class="{ 'legend-item--hidden': hiddenModels.has(item.name) }"
                             :aria-pressed="!hiddenModels.has(item.name)"
-                            :title="`切换 ${item.name}`"
+                            :title="$t('overview.toggleItem', { name: item.name })"
                             @click="toggleModel(item.name)"
                         >
                             <span
@@ -147,7 +147,7 @@
                     </div>
                     <div class="distribution-pies">
                         <div class="pie-pane">
-                            <h4 class="pie-pane-title">成本分布</h4>
+                            <h4 class="pie-pane-title">{{ $t('overview.costDistribution') }}</h4>
                             <PieChart
                                 v-if="modelCostPieData.length > 0"
                                 :data="modelCostPieData"
@@ -158,12 +158,12 @@
                             />
                             <EmptyState
                                 v-else
-                                title="当前成本为 $0.00，暂无成本占比"
+                                :title="$t('overview.noCostData')"
                                 data-testid="model-cost-empty"
                             />
                         </div>
                         <div class="pie-pane">
-                            <h4 class="pie-pane-title">消息分布</h4>
+                            <h4 class="pie-pane-title">{{ $t('overview.messageDistribution') }}</h4>
                             <PieChart
                                 v-if="modelMessagePieData.length > 0"
                                 :data="modelMessagePieData"
@@ -174,7 +174,7 @@
                             />
                             <EmptyState
                                 v-else
-                                title="暂无消息数据"
+                                :title="$t('overview.noMessageData')"
                                 data-testid="model-message-empty"
                             />
                         </div>
@@ -185,12 +185,12 @@
             <!-- Project Distribution: cost + sessions in one card -->
             <div class="chart-card" data-testid="project-distribution">
                 <div class="chart-card-header">
-                    <h3 class="chart-card-title">项目分布</h3>
-                    <span class="chart-card-subtitle">仅显示用量最高的 8 个项目，其余归入「其他」</span>
+                    <h3 class="chart-card-title">{{ $t('overview.projectDistribution') }}</h3>
+                    <span class="chart-card-subtitle">{{ $t('overview.projectDistributionSubtitle') }}</span>
                 </div>
                 <EmptyState
                     v-if="projectCostPieRawData.length === 0 && projectSessionPieRawData.length === 0"
-                    title="暂无项目数据"
+                    :title="$t('overview.noProjectData')"
                     data-testid="project-distribution-empty"
                 />
                 <template v-else>
@@ -205,7 +205,7 @@
                             class="legend-item"
                             :class="{ 'legend-item--hidden': hiddenProjects.has(item.name) }"
                             :aria-pressed="!hiddenProjects.has(item.name)"
-                            :title="`切换 ${item.name}`"
+                            :title="$t('overview.toggleItem', { name: item.name })"
                             @click="toggleProject(item.name)"
                         >
                             <span
@@ -217,7 +217,7 @@
                     </div>
                     <div class="distribution-pies">
                         <div class="pie-pane">
-                            <h4 class="pie-pane-title">成本分布</h4>
+                            <h4 class="pie-pane-title">{{ $t('overview.costDistribution') }}</h4>
                             <PieChart
                                 v-if="projectCostPieData.length > 0"
                                 :data="projectCostPieData"
@@ -228,12 +228,12 @@
                             />
                             <EmptyState
                                 v-else
-                                title="当前成本为 $0.00，暂无成本占比"
+                                :title="$t('overview.noCostData')"
                                 data-testid="project-cost-empty"
                             />
                         </div>
                         <div class="pie-pane">
-                            <h4 class="pie-pane-title">会话分布</h4>
+                            <h4 class="pie-pane-title">{{ $t('overview.sessionDistribution') }}</h4>
                             <PieChart
                                 v-if="projectSessionPieData.length > 0"
                                 :data="projectSessionPieData"
@@ -244,7 +244,7 @@
                             />
                             <EmptyState
                                 v-else
-                                title="暂无会话数据"
+                                :title="$t('overview.noSessionData')"
                                 data-testid="project-session-empty"
                             />
                         </div>
@@ -258,24 +258,25 @@
 
 <script setup lang="ts">
 import { computed, onActivated, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import type {
   DashboardEfficiencyHeatmapPoint,
   DashboardOverviewProjectDistributionItem,
-} from "../api/client";
-import HeatmapChart from "../charts/HeatmapChart.vue";
-import LineChart from "../charts/LineChart.vue";
-import PieChart from "../charts/PieChart.vue";
-import EmptyState from "../components/EmptyState.vue";
-import LoadingState from "../components/LoadingState.vue";
-import MetricCard from "../components/MetricCard.vue";
-import TimeRangePicker from "../components/TimeRangePicker.vue";
-import { useOverviewStore } from "../stores/overview";
-import { formatCost, formatNumber, formatTokens } from "../utils/format";
+} from "@/api/client";
+import HeatmapChart from "@/charts/HeatmapChart.vue";
+import LineChart from "@/charts/LineChart.vue";
+import PieChart from "@/charts/PieChart.vue";
+import EmptyState from "@/components/EmptyState.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import MetricCard from "@/components/MetricCard.vue";
+import TimeRangePicker from "@/components/TimeRangePicker.vue";
+import { useOverviewStore } from "@/stores/overview";
+import { formatCost, formatNumber, formatTokens } from "@/utils/format";
 import {
   formatBucketLocal,
   getRangeMs,
   type TimeRange,
-} from "../utils/timezone";
+} from "@/utils/timezone";
 
 // ── ECharts default palette (matches PieChart.vue) ─────────────────
 
@@ -292,9 +293,10 @@ const ECHARTS_COLORS = [
   "#8884d8",
 ];
 
-// ── Store ──────────────────────────────────────────────────────────
+// ── Store & i18n ───────────────────────────────────────────────────
 
 const store = useOverviewStore();
+const { t } = useI18n();
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -384,7 +386,7 @@ const trendSeries = computed(() => [
     yAxisIndex: 0,
   },
   {
-    name: "消息",
+    name: t("overview.seriesMessages"),
     data: trendData.value.map((d) => d.messages),
     color: "#16a34a",
     yAxisIndex: 1,
@@ -461,7 +463,7 @@ const modelLegendItems = computed(() => {
 
 const modelCostTooltip = (params: unknown): string => {
   const p = params as { name: string; value: number; percent: number };
-  return `${p.name}<br/>成本: ${formatCost(p.value)} (${p.percent.toFixed(1)}%)`;
+  return `${p.name}<br/>${t("overview.tooltipCost", { cost: formatCost(p.value), percent: p.percent.toFixed(1) })}`;
 };
 
 const modelMessageTooltip = (params: unknown): string => {
@@ -470,7 +472,7 @@ const modelMessageTooltip = (params: unknown): string => {
     (m) => m.model === p.name,
   );
   const pct = entry?.percentage ?? p.percent;
-  return `${p.name}<br/>消息: ${formatNumber(p.value)} (${pct.toFixed(1)}%)`;
+  return `${p.name}<br/>${t("overview.tooltipMessages", { count: formatNumber(p.value), percent: pct.toFixed(1) })}`;
 };
 
 // ── Project Distribution ───────────────────────────────────────────
@@ -501,7 +503,7 @@ function buildProjectPieData(
   if (rest.length > 0) {
     const otherSum = rest.reduce((sum, p) => sum + accessor(p), 0);
     result.push({
-      name: "其他",
+      name: t("overview.other"),
       value: precision > 0 ? Number(otherSum.toFixed(precision)) : otherSum,
     });
   }
@@ -552,17 +554,25 @@ const projectLegendItems = computed(() => {
 
 const projectCostTooltip = (params: unknown): string => {
   const p = params as { name: string; value: number; percent: number };
-  return `${p.name}<br/>成本: ${formatCost(p.value)} (${p.percent.toFixed(1)}%)`;
+  return `${p.name}<br/>${t("overview.tooltipCost", { cost: formatCost(p.value), percent: p.percent.toFixed(1) })}`;
 };
 
 const projectSessionTooltip = (params: unknown): string => {
   const p = params as { name: string; value: number; percent: number };
-  return `${p.name}<br/>会话: ${p.value.toLocaleString("en-US")} (${p.percent.toFixed(1)}%)`;
+  return `${p.name}<br/>${t("overview.tooltipSessions", { count: p.value.toLocaleString("en-US"), percent: p.percent.toFixed(1) })}`;
 };
 
 // ── Working Hour Heatmap ───────────────────────────────────────────
 
-const dayLabels = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+const dayLabels = computed(() => [
+  t("components.monday"),
+  t("components.tuesday"),
+  t("components.wednesday"),
+  t("components.thursday"),
+  t("components.friday"),
+  t("components.saturday"),
+  t("components.sunday"),
+]);
 
 function mapHeatmapPoint(p: DashboardEfficiencyHeatmapPoint): {
   day: number;

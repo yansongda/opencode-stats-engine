@@ -2,20 +2,20 @@
   <div class="view-container" data-testid="models-view">
     <!-- Header -->
     <div class="view-header resp-header">
-      <h1 class="view-title">模型对比</h1>
+      <h1 class="view-title">{{ $t('models.title') }}</h1>
       <TimeRangePicker v-model="selectedPeriod" />
     </div>
 
     <!-- Loading State (initial no-data only) -->
-    <LoadingState v-if="store.loading.value && store.models.value.length === 0" message="加载模型数据中..." test-id="models-loading" />
+    <LoadingState v-if="store.loading.value && store.models.value.length === 0" :message="$t('models.loading')" test-id="models-loading" />
 
     <!-- Error State (no-data only; preserves content when data exists) -->
     <EmptyState
       v-else-if="store.error.value && store.models.value.length === 0"
       variant="error"
-      title="数据加载失败"
+      :title="$t('common.dataLoadFailed')"
       :description="store.error.value"
-      action-label="重试"
+      :action-label="$t('common.retry')"
       test-id="models-error"
       @action="retry"
     />
@@ -28,31 +28,31 @@
         <thead>
           <tr>
             <th class="col-sortable" @click="toggleSort('model')">
-              模型 <span class="sort-arrow">{{ sortIndicator('model') }}</span>
+              {{ $t('models.colModel') }} <span class="sort-arrow">{{ sortIndicator('model') }}</span>
             </th>
             <th class="col-sortable col-right" @click="toggleSort('session_count')">
-              会话数 <span class="sort-arrow">{{ sortIndicator('session_count') }}</span>
+              {{ $t('models.colSessionCount') }} <span class="sort-arrow">{{ sortIndicator('session_count') }}</span>
             </th>
             <th class="col-sortable col-right" @click="toggleSort('message_count')">
-              消息数 <span class="sort-arrow">{{ sortIndicator('message_count') }}</span>
+              {{ $t('models.colMessageCount') }} <span class="sort-arrow">{{ sortIndicator('message_count') }}</span>
             </th>
             <th class="col-sortable col-right" @click="toggleSort('total_tokens')">
               Token <span class="sort-arrow">{{ sortIndicator('total_tokens') }}</span>
             </th>
             <th class="col-sortable col-right" @click="toggleSort('cost_usd')">
-              成本 <span class="sort-arrow">{{ sortIndicator('cost_usd') }}</span>
+              {{ $t('models.colCost') }} <span class="sort-arrow">{{ sortIndicator('cost_usd') }}</span>
             </th>
             <th class="col-sortable col-right" @click="toggleSort('avg_cost_per_message')">
-              平均成本/消息 <span class="sort-arrow">{{ sortIndicator('avg_cost_per_message') }}</span>
+              {{ $t('models.colAvgCost') }} <span class="sort-arrow">{{ sortIndicator('avg_cost_per_message') }}</span>
             </th>
             <th class="col-sortable col-right" @click="toggleSort('error_count')">
-              错误率 <span class="sort-arrow">{{ sortIndicator('error_count') }}</span>
+              {{ $t('models.colErrorRate') }} <span class="sort-arrow">{{ sortIndicator('error_count') }}</span>
             </th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="sortedModels.length === 0">
-            <td colspan="7" class="empty-row">暂无数据</td>
+            <td colspan="7" class="empty-row">{{ $t('models.noData') }}</td>
           </tr>
           <tr v-for="m in sortedModels" :key="m.model" :data-testid="`model-row-${m.model}`">
             <td class="col-monospace">{{ m.model }}</td>
@@ -76,8 +76,8 @@
       <!-- Token Breakdown (Stacked Bar) -->
       <div class="chart-card" data-testid="token-breakdown-chart">
         <div class="chart-card-header">
-          <h3 class="chart-card-title">Token 细分对比</h3>
-          <span class="chart-card-subtitle">默认展示成本最高的 20 个模型</span>
+          <h3 class="chart-card-title">{{ $t('models.tokenBreakdown') }}</h3>
+          <span class="chart-card-subtitle">{{ $t('models.tokenBreakdownSubtitle') }}</span>
         </div>
         <BarChart
           :x-data="tokenChartLabels"
@@ -92,15 +92,15 @@
       <!-- Message/Session Comparison (Dual-Axis Bar) -->
       <div class="chart-card" data-testid="message-session-chart">
         <div class="chart-card-header">
-          <h3 class="chart-card-title">消息会话数对比</h3>
-          <span class="chart-card-subtitle">仅显示会话数最多的 8 个模型</span>
+          <h3 class="chart-card-title">{{ $t('models.messageSessionComparison') }}</h3>
+          <span class="chart-card-subtitle">{{ $t('models.messageSessionSubtitle') }}</span>
         </div>
         <BarChart
           :x-data="messageSessionChartLabels"
           :series="messageSessionChartSeries"
           height="280px"
-          y-label="会话数"
-          right-y-label="消息数"
+          :y-label="$t('models.yLabelSessions')"
+          :right-y-label="$t('models.yLabelMessages')"
           :value-formatter="formatNumber"
           :right-value-formatter="formatNumber"
         />
@@ -110,8 +110,8 @@
     <!-- Charts Row 2: Cost Comparison (full width) -->
     <div class="chart-card chart-card-full" data-testid="cost-trend-chart">
       <div class="chart-card-header">
-        <h3 class="chart-card-title">成本对比</h3>
-        <span class="chart-card-subtitle">默认展示成本最高的 20 个模型</span>
+        <h3 class="chart-card-title">{{ $t('models.costComparison') }}</h3>
+        <span class="chart-card-subtitle">{{ $t('models.costComparisonSubtitle') }}</span>
       </div>
       <BarChart
         :x-data="costChartLabels"
@@ -125,13 +125,13 @@
     <!-- Charts Row 3: Cost-Performance Scatter (full width) -->
     <div class="chart-card chart-card-full" data-testid="cost-performance-chart">
       <div class="chart-card-header">
-        <h3 class="chart-card-title">性价比分析</h3>
-        <span class="chart-card-subtitle">默认展示成本最高的 20 个模型</span>
+        <h3 class="chart-card-title">{{ $t('models.valueAnalysis') }}</h3>
+        <span class="chart-card-subtitle">{{ $t('models.valueAnalysisSubtitle') }}</span>
       </div>
       <ScatterChart
         :data="scatterData"
-        x-label="总成本 (USD)"
-        y-label="输出 Token"
+        :x-label="$t('models.xLabelCost')"
+        :y-label="$t('models.yLabelOutputToken')"
         height="300px"
         :x-value-formatter="formatCost"
         :y-value-formatter="formatTokens"
@@ -143,22 +143,24 @@
 
 <script setup lang="ts">
 import { computed, onActivated, onMounted, ref, watch } from "vue";
-import type { DashboardModelItem } from "../api/client";
-import BarChart from "../charts/BarChart.vue";
-import ScatterChart from "../charts/ScatterChart.vue";
-import EmptyState from "../components/EmptyState.vue";
-import LoadingState from "../components/LoadingState.vue";
-import TimeRangePicker from "../components/TimeRangePicker.vue";
-import { useModelsStore } from "../stores/models";
-import { formatCost, formatNumber, formatTokens } from "../utils/format";
+import { useI18n } from "vue-i18n";
+import type { DashboardModelItem } from "@/api/client";
+import BarChart from "@/charts/BarChart.vue";
+import ScatterChart from "@/charts/ScatterChart.vue";
+import EmptyState from "@/components/EmptyState.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import TimeRangePicker from "@/components/TimeRangePicker.vue";
+import { useModelsStore } from "@/stores/models";
+import { formatCost, formatNumber, formatTokens } from "@/utils/format";
 import {
   formatBucketLocal,
   getRangeMs,
   type TimeRange,
-} from "../utils/timezone";
+} from "@/utils/timezone";
 
 // ── Store ──────────────────────────────────────────────────────────────
 const store = useModelsStore();
+const { t } = useI18n();
 
 const STALE_MS = 60_000;
 
@@ -298,13 +300,13 @@ const messageSessionChartSeries = computed(() => {
     .slice(0, 8);
   return [
     {
-      name: "会话数",
+      name: t("models.seriesSessions"),
       data: top8.map((m) => m.session_count),
       color: "#3b82f6",
       yAxisIndex: 0,
     },
     {
-      name: "消息数",
+      name: t("models.seriesMessages"),
       data: top8.map((m) => m.message_count),
       color: "#10b981",
       yAxisIndex: 1,

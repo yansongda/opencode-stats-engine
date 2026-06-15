@@ -13,13 +13,16 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted } from "vue";
-import AppLayout from "./components/AppLayout.vue";
-import { useSSE } from "./composables/useSSE";
+import AppLayout from "@/components/AppLayout.vue";
+import { useSSE } from "@/composables/useSSE";
+import i18n from "@/i18n";
+import { getInitialLocale, setLocale } from "@/i18n/composables/useLocale";
 
 const sse = useSSE();
 const { realtimeMode, lastUpdatedAt, lastDataUpdatedAt, refreshing } = sse;
 
 onMounted(() => {
+  setLocale(i18n, getInitialLocale());
   sse.connect();
 });
 

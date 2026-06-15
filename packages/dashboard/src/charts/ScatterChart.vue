@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import type { EChartsOption } from "echarts";
 import { computed } from "vue";
-import BaseChart from "./BaseChart.vue";
+import BaseChart from "@/charts/BaseChart.vue";
 
 // ── Props ──────────────────────────────────────────────────────────
 

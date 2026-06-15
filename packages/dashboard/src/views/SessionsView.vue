@@ -1,19 +1,19 @@
 <template>
   <div class="view-container" data-testid="sessions-view">
     <div class="view-header resp-header">
-      <h1 class="view-title">会话列表</h1>
+      <h1 class="view-title">{{ $t('sessions.title') }}</h1>
     </div>
 
     <!-- Loading State (initial no-data only) -->
-    <LoadingState v-if="loading && !hasExistingData" message="加载会话数据中..." test-id="sessions-loading" />
+    <LoadingState v-if="loading && !hasExistingData" :message="$t('sessions.loading')" test-id="sessions-loading" />
 
     <!-- Error State (no-data only; preserves content when data exists) -->
     <EmptyState
       v-else-if="error && !hasExistingData"
       variant="error"
-      title="数据加载失败"
+      :title="$t('common.dataLoadFailed')"
       :description="error"
-      action-label="重试"
+      :action-label="$t('common.retry')"
       test-id="sessions-error"
       @action="retryFetch"
     />
@@ -26,20 +26,20 @@
         v-model="searchQuery"
         type="text"
         class="filter-input filter-search"
-        placeholder="搜索会话 ID、项目、标题..."
+        :placeholder="$t('sessions.searchPlaceholder')"
         data-testid="filter-search"
       />
       <select v-model="filterStatus" class="filter-select" data-testid="filter-status">
-        <option value="all">全部状态</option>
-        <option value="active">活跃</option>
-        <option value="deleted">已删除</option>
+        <option value="all">{{ $t('sessions.filterAllStatus') }}</option>
+        <option value="active">{{ $t('sessions.filterActive') }}</option>
+        <option value="deleted">{{ $t('sessions.filterDeleted') }}</option>
       </select>
       <select v-model="filterModel" class="filter-select" data-testid="filter-model">
-        <option value="all">全部模型</option>
+        <option value="all">{{ $t('sessions.filterAllModels') }}</option>
         <option v-for="m in uniqueModels" :key="m" :value="m">{{ m }}</option>
       </select>
       <select v-model="filterProject" class="filter-select" data-testid="filter-project">
-        <option value="all">全部项目</option>
+        <option value="all">{{ $t('sessions.filterAllProjects') }}</option>
         <option v-for="p in uniqueProjects" :key="p" :value="p">{{ truncateProject(p) }}</option>
       </select>
       <input
@@ -48,24 +48,24 @@
         class="filter-input filter-date"
         data-testid="filter-date-from"
       />
-      <span class="filter-sep">至</span>
+      <span class="filter-sep">{{ $t('sessions.dateSeparator') }}</span>
       <input
         v-model="dateTo"
         type="date"
         class="filter-input filter-date"
         data-testid="filter-date-to"
       />
-      <button class="btn btn-ghost" data-testid="filter-reset" @click="resetFilters">重置</button>
+      <button class="btn btn-ghost" data-testid="filter-reset" @click="resetFilters">{{ $t('sessions.resetFilters') }}</button>
     </div>
 
     <!-- Summary Bar -->
     <div class="summary-bar">
-      <span class="summary-total">共 {{ filteredSessions.length }} 会话</span>
+      <span class="summary-total">{{ $t('sessions.totalSessions', { count: filteredSessions.length }) }}</span>
       <span class="summary-sep">|</span>
-      <span class="summary-active">{{ activeCount }} 活跃</span>
+      <span class="summary-active">{{ $t('sessions.activeCount', { count: activeCount }) }}</span>
       <span class="summary-sep">|</span>
-      <span class="summary-deleted">{{ deletedCount }} 已删除</span>
-      <span v-if="allSessions.length === 500" class="summary-truncated">显示最近 500 条，可使用筛选缩小范围</span>
+      <span class="summary-deleted">{{ $t('sessions.deletedCount', { count: deletedCount }) }}</span>
+      <span v-if="allSessions.length === 500" class="summary-truncated">{{ $t('sessions.truncatedNotice') }}</span>
     </div>
 
     <!-- Data Table -->
@@ -78,16 +78,16 @@
               :class="{ sorted: sortKey === 'session_id' }"
               @click="toggleSort('session_id')"
             >
-              会话 ID
+              {{ $t('sessions.colSessionId') }}
               <span class="sort-indicator">{{ sortIndicator('session_id') }}</span>
             </th>
-            <th class="col-title">标题</th>
+            <th class="col-title">{{ $t('sessions.colTitle') }}</th>
             <th
               class="col-project sortable"
               :class="{ sorted: sortKey === 'project_path' }"
               @click="toggleSort('project_path')"
             >
-              项目
+              {{ $t('sessions.colProject') }}
               <span class="sort-indicator">{{ sortIndicator('project_path') }}</span>
             </th>
             <th
@@ -95,7 +95,7 @@
               :class="{ sorted: sortKey === 'primary_model' }"
               @click="toggleSort('primary_model')"
             >
-              模型
+              {{ $t('sessions.colModel') }}
               <span class="sort-indicator">{{ sortIndicator('primary_model') }}</span>
             </th>
             <th
@@ -111,7 +111,7 @@
               :class="{ sorted: sortKey === 'message_count' }"
               @click="toggleSort('message_count')"
             >
-              消息数
+              {{ $t('sessions.colMessageCount') }}
               <span class="sort-indicator">{{ sortIndicator('message_count') }}</span>
             </th>
             <th
@@ -119,16 +119,16 @@
               :class="{ sorted: sortKey === 'total_cost_usd' }"
               @click="toggleSort('total_cost_usd')"
             >
-              成本
+              {{ $t('sessions.colCost') }}
               <span class="sort-indicator">{{ sortIndicator('total_cost_usd') }}</span>
             </th>
-            <th class="col-status">状态</th>
+            <th class="col-status">{{ $t('sessions.colStatus') }}</th>
             <th
               class="col-date sortable"
               :class="{ sorted: sortKey === 'last_event_at_ms' }"
               @click="toggleSort('last_event_at_ms')"
             >
-              最后活跃
+              {{ $t('sessions.colLastActive') }}
               <span class="sort-indicator">{{ sortIndicator('last_event_at_ms') }}</span>
             </th>
           </tr>
@@ -151,12 +151,12 @@
               </span>
             </td>
             <td class="col-title" :title="session.title ?? ''">
-              {{ session.title ?? '—' }}
+              {{ session.title ?? '\u2014' }}
             </td>
             <td class="col-project" :title="session.project_path ?? ''">
-              {{ truncateProject(session.project_path ?? '—') }}
+              {{ truncateProject(session.project_path ?? '\u2014') }}
             </td>
-            <td class="col-model">{{ session.primary_model ?? '—' }}</td>
+            <td class="col-model">{{ session.primary_model ?? '\u2014' }}</td>
             <td class="col-tokens">{{ formatTokens(session.total_tokens) }}</td>
             <td class="col-msg-count">{{ formatNumber(session.message_count) }}</td>
             <td class="col-cost">{{ formatCost(session.total_cost_usd) }}</td>
@@ -166,7 +166,7 @@
             <td class="col-date">{{ formatTimestamp(session.last_event_at_ms) }}</td>
           </tr>
           <tr v-if="paginatedSessions.length === 0">
-            <td colspan="9" class="empty-state">没有匹配当前过滤条件的会话</td>
+            <td colspan="9" class="empty-state">{{ $t('sessions.noMatchingSessions') }}</td>
           </tr>
         </tbody>
       </table>
@@ -175,7 +175,7 @@
     <!-- Pagination -->
     <div class="pagination-bar" data-testid="pagination">
       <span class="pagination-info">
-        显示 {{ paginationStart }}–{{ paginationEnd }} / 共 {{ filteredSessions.length }} 条
+        {{ $t('sessions.pagination', { start: paginationStart, end: paginationEnd, total: filteredSessions.length }) }}
       </span>
       <div class="pagination-controls">
         <button
@@ -184,7 +184,7 @@
           data-testid="page-prev"
           @click="currentPage--"
         >
-          上一页
+          {{ $t('sessions.prevPage') }}
         </button>
         <button
           v-for="page in visiblePages"
@@ -201,7 +201,7 @@
           data-testid="page-next"
           @click="currentPage++"
         >
-          下一页
+          {{ $t('sessions.nextPage') }}
         </button>
       </div>
     </div>
@@ -215,54 +215,54 @@
       <button
         class="detail-backdrop"
         type="button"
-        aria-label="关闭会话详情"
+        :aria-label="$t('sessions.closeDetailAriaLabel')"
         @click="closeDetail"
       />
-      <aside class="detail-drawer" aria-label="会话详情">
-        <div v-if="detailLoading" class="detail-loading" data-testid="session-detail-loading">加载中...</div>
+      <aside class="detail-drawer" :aria-label="$t('sessions.detailAriaLabel')">
+        <div v-if="detailLoading" class="detail-loading" data-testid="session-detail-loading">{{ $t('sessions.detailLoading') }}</div>
         <template v-else-if="selectedDetail">
       <div class="detail-header">
         <h2 class="detail-title">
-          会话详情
+          {{ $t('sessions.detailTitle') }}
           <code class="detail-session-id">{{ selectedDetail.session.session_id }}</code>
         </h2>
-        <button class="btn btn-ghost btn-sm" @click="closeDetail">关闭</button>
+        <button class="btn btn-ghost btn-sm" @click="closeDetail">{{ $t('sessions.close') }}</button>
       </div>
 
       <!-- Basic Info -->
       <div class="detail-section">
-        <h3 class="detail-section-title">基本信息</h3>
+        <h3 class="detail-section-title">{{ $t('sessions.sectionBasicInfo') }}</h3>
         <div class="detail-grid">
           <div class="detail-item">
-            <span class="detail-label">标题</span>
-            <span class="detail-value">{{ selectedDetail.session.title ?? '—' }}</span>
+            <span class="detail-label">{{ $t('sessions.labelTitle') }}</span>
+            <span class="detail-value">{{ selectedDetail.session.title ?? '\u2014' }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">项目</span>
-            <span class="detail-value" :title="selectedDetail.session.project_path ?? ''">{{ truncateProject(selectedDetail.session.project_path ?? '—') }}</span>
+            <span class="detail-label">{{ $t('sessions.labelProject') }}</span>
+            <span class="detail-value" :title="selectedDetail.session.project_path ?? ''">{{ truncateProject(selectedDetail.session.project_path ?? '\u2014') }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">模型</span>
-            <span class="detail-value">{{ selectedDetail.session.primary_model ?? '—' }}</span>
+            <span class="detail-label">{{ $t('sessions.labelModel') }}</span>
+            <span class="detail-value">{{ selectedDetail.session.primary_model ?? '\u2014' }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">状态</span>
+            <span class="detail-label">{{ $t('sessions.labelStatus') }}</span>
             <span class="detail-value"><StatusBadge :status="selectedDetail.session.status" /></span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">时长</span>
+            <span class="detail-label">{{ $t('sessions.labelDuration') }}</span>
             <span class="detail-value">{{ formatDuration(selectedDetail.session.duration_ms) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">消息数</span>
+            <span class="detail-label">{{ $t('sessions.labelMessageCount') }}</span>
             <span class="detail-value">{{ formatNumber(selectedDetail.session.message_count) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">首次事件</span>
+            <span class="detail-label">{{ $t('sessions.labelFirstEvent') }}</span>
             <span class="detail-value">{{ formatTimestamp(selectedDetail.session.first_event_at_ms) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">末次事件</span>
+            <span class="detail-label">{{ $t('sessions.labelLastEvent') }}</span>
             <span class="detail-value">{{ formatTimestamp(selectedDetail.session.last_event_at_ms) }}</span>
           </div>
         </div>
@@ -270,34 +270,34 @@
 
       <!-- Token Stats -->
       <div class="detail-section">
-        <h3 class="detail-section-title">Token 统计</h3>
+        <h3 class="detail-section-title">{{ $t('sessions.sectionTokenStats') }}</h3>
         <div class="detail-grid">
           <div class="detail-item">
-            <span class="detail-label">总计</span>
+            <span class="detail-label">{{ $t('sessions.labelTotal') }}</span>
             <span class="detail-value detail-value-highlight">{{ formatTokens(selectedDetail.session.total_tokens) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">输入</span>
+            <span class="detail-label">{{ $t('sessions.labelInput') }}</span>
             <span class="detail-value">{{ formatTokens(selectedDetail.session.input_tokens) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">输出</span>
+            <span class="detail-label">{{ $t('sessions.labelOutput') }}</span>
             <span class="detail-value">{{ formatTokens(selectedDetail.session.output_tokens) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">推理</span>
+            <span class="detail-label">{{ $t('sessions.labelReasoning') }}</span>
             <span class="detail-value">{{ formatTokens(selectedDetail.session.reasoning_tokens) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">缓存读</span>
+            <span class="detail-label">{{ $t('sessions.labelCacheRead') }}</span>
             <span class="detail-value">{{ formatTokens(selectedDetail.session.cache_read) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">缓存写</span>
+            <span class="detail-label">{{ $t('sessions.labelCacheWrite') }}</span>
             <span class="detail-value">{{ formatTokens(selectedDetail.session.cache_write) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">成本</span>
+            <span class="detail-label">{{ $t('sessions.labelCost') }}</span>
             <span class="detail-value detail-value-highlight">{{ formatCost(selectedDetail.session.total_cost_usd) }}</span>
           </div>
         </div>
@@ -305,34 +305,34 @@
 
       <!-- Messages & Tools -->
       <div class="detail-section">
-        <h3 class="detail-section-title">消息 & 工具</h3>
+        <h3 class="detail-section-title">{{ $t('sessions.sectionMessagesTools') }}</h3>
         <div class="detail-grid">
           <div class="detail-item">
-            <span class="detail-label">用户消息</span>
+            <span class="detail-label">{{ $t('sessions.labelUserMessages') }}</span>
             <span class="detail-value">{{ formatNumber(selectedDetail.session.user_message_count) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">助手消息</span>
+            <span class="detail-label">{{ $t('sessions.labelAssistantMessages') }}</span>
             <span class="detail-value">{{ formatNumber(selectedDetail.session.assistant_message_count) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">工具调用</span>
+            <span class="detail-label">{{ $t('sessions.labelToolCalls') }}</span>
             <span class="detail-value">{{ formatNumber(selectedDetail.session.tool_call_count) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">工具错误</span>
+            <span class="detail-label">{{ $t('sessions.labelToolErrors') }}</span>
             <span class="detail-value">{{ formatNumber(selectedDetail.session.tool_error_count) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">文件变更</span>
+            <span class="detail-label">{{ $t('sessions.labelFileChanges') }}</span>
             <span class="detail-value">{{ formatNumber(selectedDetail.session.files_changed) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">代码变更</span>
+            <span class="detail-label">{{ $t('sessions.labelCodeChanges') }}</span>
             <span class="detail-value">+{{ formatNumber(selectedDetail.session.lines_added) }} / -{{ formatNumber(selectedDetail.session.lines_deleted) }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">错误数</span>
+            <span class="detail-label">{{ $t('sessions.labelErrorCount') }}</span>
             <span class="detail-value">{{ formatNumber(selectedDetail.session.error_count) }}</span>
           </div>
         </div>
@@ -340,18 +340,18 @@
 
       <!-- Model Usage -->
       <div v-if="selectedDetail.model_usage.length > 0" class="detail-section">
-        <h3 class="detail-section-title">模型使用</h3>
+        <h3 class="detail-section-title">{{ $t('sessions.sectionModelUsage') }}</h3>
         <div class="table-wrapper">
           <table class="data-table detail-table">
             <thead>
               <tr>
-                <th>模型</th>
-                <th class="col-right">消息</th>
-                <th class="col-right">输入 Token</th>
-                <th class="col-right">输出 Token</th>
-                <th class="col-right">推理 Token</th>
-                <th class="col-right">总 Token</th>
-                <th class="col-right">成本</th>
+                <th>{{ $t('sessions.colModelDetail') }}</th>
+                <th class="col-right">{{ $t('sessions.colMessages') }}</th>
+                <th class="col-right">{{ $t('sessions.colInputToken') }}</th>
+                <th class="col-right">{{ $t('sessions.colOutputToken') }}</th>
+                <th class="col-right">{{ $t('sessions.colReasoningToken') }}</th>
+                <th class="col-right">{{ $t('sessions.colTotalToken') }}</th>
+                <th class="col-right">{{ $t('sessions.colCostDetail') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -371,29 +371,29 @@
 
       <!-- Tool Calls -->
       <div v-if="selectedDetail.tool_calls.length > 0" class="detail-section">
-        <h3 class="detail-section-title">工具调用</h3>
+        <h3 class="detail-section-title">{{ $t('sessions.sectionToolCalls') }}</h3>
         <div class="table-wrapper">
           <table class="data-table detail-table">
             <thead>
               <tr>
-                <th>工具</th>
-                <th>标题</th>
-                <th>状态</th>
-                <th class="col-right">耗时</th>
-                <th>错误</th>
+                <th>{{ $t('sessions.colToolDetail') }}</th>
+                <th>{{ $t('sessions.colTitleDetail') }}</th>
+                <th>{{ $t('sessions.colStatusDetail') }}</th>
+                <th class="col-right">{{ $t('sessions.colDurationDetail') }}</th>
+                <th>{{ $t('sessions.colError') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="tc in selectedDetail.tool_calls" :key="tc.call_id">
                 <td class="col-monospace">{{ tc.tool_name }}</td>
-                <td>{{ tc.title ?? '—' }}</td>
+                <td>{{ tc.title ?? '\u2014' }}</td>
                 <td>
                   <span :class="tc.status === 'completed' ? 'badge-active' : tc.status === 'failed' ? 'badge-deleted' : ''">
-                    {{ tc.status ?? '—' }}
+                    {{ tc.status ?? '\u2014' }}
                   </span>
                 </td>
                 <td class="col-right">{{ formatDuration(tc.duration_ms) }}</td>
-                <td class="col-error-msg">{{ tc.error_message ?? '—' }}</td>
+                <td class="col-error-msg">{{ tc.error_message ?? '\u2014' }}</td>
               </tr>
             </tbody>
           </table>
@@ -402,31 +402,31 @@
 
       <!-- Messages Metadata -->
       <div v-if="selectedDetail.messages.length > 0" class="detail-section">
-        <h3 class="detail-section-title">消息元数据</h3>
+        <h3 class="detail-section-title">{{ $t('sessions.sectionMessageMetadata') }}</h3>
         <div class="table-wrapper">
           <table class="data-table detail-table">
             <thead>
               <tr>
-                <th>角色</th>
-                <th>模型</th>
+                <th>{{ $t('sessions.colRole') }}</th>
+                <th>{{ $t('sessions.colModelMeta') }}</th>
                 <th class="col-right">Token</th>
-                <th class="col-right">成本</th>
-                <th class="col-right">文件变更</th>
-                <th class="col-right">耗时</th>
-                <th>状态</th>
+                <th class="col-right">{{ $t('sessions.colCostMeta') }}</th>
+                <th class="col-right">{{ $t('sessions.colFileChanges') }}</th>
+                <th class="col-right">{{ $t('sessions.colDurationMeta') }}</th>
+                <th>{{ $t('sessions.colStatusMeta') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="msg in selectedDetail.messages" :key="msg.message_id">
-                <td>{{ msg.role === 'user' ? '用户' : '助手' }}</td>
-                <td class="col-monospace">{{ msg.model ?? '—' }}</td>
+                <td>{{ msg.role === 'user' ? $t('sessions.roleUser') : $t('sessions.roleAssistant') }}</td>
+                <td class="col-monospace">{{ msg.model ?? '\u2014' }}</td>
                 <td class="col-right">{{ formatTokens(msg.total_tokens) }}</td>
                 <td class="col-right">{{ formatCost(msg.cost_usd) }}</td>
-                <td class="col-right">{{ msg.files_changed > 0 ? msg.files_changed : '—' }}</td>
+                <td class="col-right">{{ msg.files_changed > 0 ? msg.files_changed : '\u2014' }}</td>
                 <td class="col-right">{{ formatDuration(msg.duration_ms) }}</td>
                 <td>
-                  <span v-if="msg.has_error" class="badge-deleted">{{ msg.error_type ?? '错误' }}</span>
-                  <span v-else class="badge-active">正常</span>
+                  <span v-if="msg.has_error" class="badge-deleted">{{ msg.error_type ?? $t('sessions.errorBadge') }}</span>
+                  <span v-else class="badge-active">{{ $t('sessions.okBadge') }}</span>
                 </td>
               </tr>
             </tbody>
@@ -436,14 +436,14 @@
 
       <!-- Errors -->
       <div v-if="selectedDetail.errors.length > 0" class="detail-section">
-        <h3 class="detail-section-title">错误</h3>
+        <h3 class="detail-section-title">{{ $t('sessions.sectionErrors') }}</h3>
         <div class="table-wrapper">
           <table class="data-table detail-table">
             <thead>
               <tr>
-                <th>事件类型</th>
-                <th>错误信息</th>
-                <th class="col-right">时间</th>
+                <th>{{ $t('sessions.colEventType') }}</th>
+                <th>{{ $t('sessions.colErrorMessage') }}</th>
+                <th class="col-right">{{ $t('sessions.colTime') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -473,16 +473,21 @@ import {
   ref,
   watch,
 } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   type DashboardSessionDetailData,
   type DashboardSessionListItem,
   fetchDashboardSessionDetail,
-} from "../api/client";
-import EmptyState from "../components/EmptyState.vue";
-import LoadingState from "../components/LoadingState.vue";
-import { useSessionsStore } from "../stores/sessions";
-import { formatCost, formatNumber, formatTokens } from "../utils/format";
-import { formatTimestamp, parseLocalDateInput } from "../utils/timezone";
+} from "@/api/client";
+import EmptyState from "@/components/EmptyState.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import { useSessionsStore } from "@/stores/sessions";
+import { formatCost, formatNumber, formatTokens } from "@/utils/format";
+import { formatTimestamp, parseLocalDateInput } from "@/utils/timezone";
+
+// ── i18n ────────────────────────────────────────────────────────────────
+
+const { t } = useI18n();
 
 // ── Store ──────────────────────────────────────────────────────────────
 
@@ -562,8 +567,8 @@ function toggleSort(key: SortKey): void {
 }
 
 function sortIndicator(key: SortKey): string {
-  if (sortKey.value !== key) return "↕";
-  return sortDir.value === "asc" ? "↑" : "↓";
+  if (sortKey.value !== key) return "\u2195";
+  return sortDir.value === "asc" ? "\u2191" : "\u2193";
 }
 
 // ── Derived Data ─────────────────────────────────────────────────────
@@ -753,25 +758,25 @@ function resetFilters(): void {
 
 function truncateProject(path: string): string {
   if (path.length <= 30) return path;
-  return `…${path.slice(-28)}`;
+  return `\u2026${path.slice(-28)}`;
 }
 
 function truncateSessionId(id: string): string {
   if (id.length <= 16) return id;
-  return `${id.slice(0, 12)}…`;
+  return `${id.slice(0, 12)}\u2026`;
 }
 
 function formatDuration(ms: number | null): string {
-  if (ms == null) return "—";
+  if (ms == null) return "\u2014";
   if (ms < 1000) return `${ms}ms`;
   const sec = Math.floor(ms / 1000);
-  if (sec < 60) return `${sec}秒`;
+  if (sec < 60) return t("sessions.durationSec", { sec });
   const min = Math.floor(sec / 60);
   const remainSec = sec % 60;
-  if (min < 60) return `${min}分${remainSec}秒`;
+  if (min < 60) return t("sessions.durationMinSec", { min, sec: remainSec });
   const hour = Math.floor(min / 60);
   const remainMin = min % 60;
-  return `${hour}时${remainMin}分`;
+  return t("sessions.durationHourMin", { hour, min: remainMin });
 }
 
 // ── StatusBadge Component ─────────────────────────────────────────────
@@ -781,6 +786,7 @@ const StatusBadge = {
     status: { type: String, required: true },
   },
   setup(props: { status: string }) {
+    const { t } = useI18n();
     return () => {
       const isActive = props.status === "active";
       return h(
@@ -788,7 +794,7 @@ const StatusBadge = {
         {
           class: ["status-badge", isActive ? "badge-active" : "badge-deleted"],
         },
-        isActive ? "活跃" : "已删除",
+        isActive ? t("sessions.statusActive") : t("sessions.statusDeleted"),
       );
     };
   },

@@ -3,8 +3,9 @@ import {
   type DashboardModelCostTrendPoint,
   type DashboardModelItem,
   fetchDashboardModels,
-} from "../api/client";
-import { getRangeMs, type TimeRange } from "../utils/timezone";
+} from "@/api/client";
+import i18n from "@/i18n";
+import { getRangeMs, type TimeRange } from "@/utils/timezone";
 
 const models = ref<DashboardModelItem[]>([]) as Ref<DashboardModelItem[]>;
 const modelsCostTrend = ref<DashboardModelCostTrendPoint[]>([]) as Ref<
@@ -57,7 +58,9 @@ export async function fetchModels(
       console.warn("[silent fetch] models failed:", err);
     } else {
       error.value =
-        err instanceof Error ? err.message : "加载模型数据时发生未知错误";
+        err instanceof Error
+          ? err.message
+          : i18n.global.t("common.errorLoadModels");
     }
     return false;
   } finally {

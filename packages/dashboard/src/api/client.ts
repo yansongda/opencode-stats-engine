@@ -8,7 +8,8 @@ import type {
   DashboardSessionListItem,
   DashboardToolsData,
 } from "@opencode-stats/shared";
-import { getBrowserTimezone } from "../utils/timezone";
+import i18n from "@/i18n";
+import { getBrowserTimezone } from "@/utils/timezone";
 
 // ── Dashboard-local types ───────────────────────────────────────────────
 
@@ -95,7 +96,12 @@ async function getJson<T>(
     headers: { Accept: "application/json", "Cache-Control": "no-cache" },
   });
   if (!res.ok) {
-    throw new Error(`API error: ${res.status} ${res.statusText}`);
+    throw new Error(
+      i18n.global.t("common.apiError", {
+        status: res.status,
+        statusText: res.statusText,
+      }),
+    );
   }
   return res.json() as Promise<T>;
 }

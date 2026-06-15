@@ -1,7 +1,10 @@
 /** @module format — Shared dashboard formatting utilities. */
 
-export function formatTokens(n: number | null | undefined): string {
-  if (n == null) return "—";
+export function formatTokens(
+  n: number | null | undefined,
+  placeholder = "—",
+): string {
+  if (n == null) return placeholder;
   if (n === 0) return "0";
   if (n >= 1_000_000_000) {
     const v = n / 1_000_000_000;
@@ -21,12 +24,20 @@ export function formatTokens(n: number | null | undefined): string {
   return String(n);
 }
 
-export function formatCost(n: number | null | undefined, decimals = 2): string {
-  if (n == null) return "—";
+export function formatCost(
+  n: number | null | undefined,
+  decimals = 2,
+  placeholder = "—",
+): string {
+  if (n == null) return placeholder;
   return `$${n.toFixed(decimals)}`;
 }
 
-export function formatNumber(n: number | null | undefined): string {
-  if (n == null) return "—";
-  return n.toLocaleString("en-US");
+export function formatNumber(
+  n: number | null | undefined,
+  locale = "en-US",
+  placeholder = "—",
+): string {
+  if (n == null) return placeholder;
+  return n.toLocaleString(locale);
 }

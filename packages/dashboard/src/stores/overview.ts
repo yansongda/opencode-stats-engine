@@ -6,8 +6,9 @@ import {
   type DashboardOverviewTopModel,
   type DashboardOverviewTrendPoint,
   fetchDashboardOverview,
-} from "../api/client";
-import { getRangeMs, type TimeRange } from "../utils/timezone";
+} from "@/api/client";
+import i18n from "@/i18n";
+import { getRangeMs, type TimeRange } from "@/utils/timezone";
 
 export interface ModelMessageDistributionItem {
   model: string;
@@ -83,7 +84,7 @@ export async function fetchOverview(
     lastFetchedAt.value = Date.now();
     return true;
   } catch (err) {
-    const msg = `overview failed: ${err instanceof Error ? err.message : String(err)}`;
+    const msg = `${i18n.global.t("common.dataLoadFailed")}: ${err instanceof Error ? err.message : String(err)}`;
     if (silent) {
       console.warn(`[silent fetch] ${msg}`);
     } else {

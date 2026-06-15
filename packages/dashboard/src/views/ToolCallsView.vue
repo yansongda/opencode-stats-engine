@@ -2,20 +2,20 @@
   <div class="view-container" data-testid="tools-view">
     <!-- Header -->
     <div class="view-header resp-header">
-      <h1 class="view-title">工具统计</h1>
+      <h1 class="view-title">{{ $t('tools.title') }}</h1>
       <TimeRangePicker v-model="selectedPeriod" />
     </div>
 
     <!-- Loading State (initial no-data only) -->
-    <LoadingState v-if="loading && !hasExistingData" message="加载工具统计数据中..." test-id="tools-loading" />
+    <LoadingState v-if="loading && !hasExistingData" :message="$t('tools.loading')" test-id="tools-loading" />
 
     <!-- Error State (no-data only; preserves content when data exists) -->
     <EmptyState
       v-else-if="error && !hasExistingData"
       variant="error"
-      title="数据加载失败"
+      :title="$t('common.dataLoadFailed')"
       :description="error"
-      action-label="重试"
+      :action-label="$t('common.retry')"
       test-id="tools-error"
       @action="retryFetch"
     />
@@ -26,27 +26,27 @@
     <div class="metrics-grid resp-metrics-4" data-testid="tools-metrics">
       <div class="metric-tile">
         <div class="metric-value">{{ formatNumber(toolsData?.total_tool_calls ?? 0) }}</div>
-        <div class="metric-label">总调用次数</div>
+        <div class="metric-label">{{ $t('tools.totalCalls') }}</div>
       </div>
       <div class="metric-tile">
         <div class="metric-value">{{ formatPercent(toolsData?.error_rate ?? 0) }}</div>
-        <div class="metric-label">错误率</div>
+        <div class="metric-label">{{ $t('tools.errorRate') }}</div>
       </div>
       <div class="metric-tile">
         <div class="metric-value">{{ toolsData?.tools.length ?? 0 }}</div>
-        <div class="metric-label">工具种类</div>
+        <div class="metric-label">{{ $t('tools.toolTypes') }}</div>
       </div>
       <div class="metric-tile">
         <div class="metric-value">{{ formatNumber(toolsData?.failed_tool_calls ?? 0) }}</div>
-        <div class="metric-label">总错误数</div>
+        <div class="metric-label">{{ $t('tools.totalErrors') }}</div>
       </div>
     </div>
 
     <!-- Tool Usage Trend -->
     <section class="section" data-testid="tools-trend">
-      <h2 class="section-title">工具使用趋势</h2>
+      <h2 class="section-title">{{ $t('tools.usageTrend') }}</h2>
       <div v-if="trendDisplayLabels.length === 0" class="chart-empty">
-        暂无趋势数据
+        {{ $t('tools.noTrendData') }}
       </div>
       <LineChart
         v-else
@@ -55,31 +55,31 @@
         height="280px"
         :smooth="true"
         :show-area="true"
-        y-label="调用次数"
+        :y-label="$t('tools.yLabelCallCount')"
       />
     </section>
 
     <!-- Tool Ranking Table -->
     <section class="section" data-testid="tools-ranking">
-      <h2 class="section-title">工具使用排行</h2>
+      <h2 class="section-title">{{ $t('tools.usageRanking') }}</h2>
       <div class="table-wrapper resp-table-wrapper">
         <table class="data-table">
           <thead>
             <tr>
               <th class="sortable" :class="{ sorted: sortKey === 'tool_name' }" @click="toggleSort('tool_name')">
-                工具名称 <span class="sort-indicator">{{ sortIndicator('tool_name') }}</span>
+                {{ $t('tools.colToolName') }} <span class="sort-indicator">{{ sortIndicator('tool_name') }}</span>
               </th>
               <th class="sortable col-right" :class="{ sorted: sortKey === 'call_count' }" @click="toggleSort('call_count')">
-                调用次数 <span class="sort-indicator">{{ sortIndicator('call_count') }}</span>
+                {{ $t('tools.colCallCount') }} <span class="sort-indicator">{{ sortIndicator('call_count') }}</span>
               </th>
               <th class="sortable col-right" :class="{ sorted: sortKey === 'error_rate' }" @click="toggleSort('error_rate')">
-                错误率 <span class="sort-indicator">{{ sortIndicator('error_rate') }}</span>
+                {{ $t('tools.colErrorRate') }} <span class="sort-indicator">{{ sortIndicator('error_rate') }}</span>
               </th>
               <th class="sortable col-right" :class="{ sorted: sortKey === 'avg_duration_ms' }" @click="toggleSort('avg_duration_ms')">
-                平均耗时 <span class="sort-indicator">{{ sortIndicator('avg_duration_ms') }}</span>
+                {{ $t('tools.colAvgDuration') }} <span class="sort-indicator">{{ sortIndicator('avg_duration_ms') }}</span>
               </th>
               <th class="col-right">
-                耗时范围
+                {{ $t('tools.colDurationRange') }}
               </th>
             </tr>
           </thead>
@@ -87,8 +87,8 @@
             <tr v-if="sortedTools.length === 0">
               <td colspan="5">
                 <EmptyState
-                  title="暂无工具调用数据"
-                  description="开始使用 OpenCode 后，工具调用记录将显示在这里"
+                  :title="$t('tools.noCallData')"
+                  :description="$t('tools.noCallDataDesc')"
                   test-id="tools-empty"
                 />
               </td>
@@ -111,9 +111,9 @@
     <div class="bottom-row resp-two-col" data-testid="tools-charts">
       <!-- Error Distribution Pie -->
       <section class="section bottom-section">
-        <h2 class="section-title">错误分布</h2>
+        <h2 class="section-title">{{ $t('tools.errorDistribution') }}</h2>
         <div v-if="errorPieData.length === 0" class="chart-empty">
-          暂无错误数据
+          {{ $t('tools.noErrorData') }}
         </div>
         <PieChart
           v-else
@@ -126,16 +126,16 @@
 
       <!-- Average Duration Overview -->
       <section class="section bottom-section">
-        <h2 class="section-title">平均耗时概览</h2>
+        <h2 class="section-title">{{ $t('tools.avgDurationOverview') }}</h2>
         <div v-if="durationHistData.length === 0" class="chart-empty">
-          暂无耗时数据
+          {{ $t('tools.noDurationData') }}
         </div>
         <BarChart
           v-else
           :x-data="durationLabels"
           :series="durationSeries"
           height="280px"
-          y-label="工具数"
+          :y-label="$t('tools.yLabelToolCount')"
         />
       </section>
     </div>
@@ -143,21 +143,21 @@
     <!-- Recent Errors -->
     <section class="section" data-testid="tools-recent-errors">
       <div class="section-header">
-        <h2 class="section-title">最近错误</h2>
-        <span class="section-subtitle">默认显示最近 20 条错误</span>
+        <h2 class="section-title">{{ $t('tools.recentErrors') }}</h2>
+        <span class="section-subtitle">{{ $t('tools.recentErrorsSubtitle') }}</span>
       </div>
       <div v-if="recentErrors.length === 0" class="chart-empty">
-        暂无最近错误
+        {{ $t('tools.noRecentErrors') }}
       </div>
       <div v-else class="table-wrapper resp-table-wrapper">
         <table class="data-table">
           <thead>
             <tr>
-              <th>工具</th>
-              <th>会话</th>
-              <th>错误信息</th>
-              <th>耗时</th>
-              <th>时间</th>
+              <th>{{ $t('tools.colTool') }}</th>
+              <th>{{ $t('tools.colSession') }}</th>
+              <th>{{ $t('tools.colErrorMessage') }}</th>
+              <th>{{ $t('tools.colDuration') }}</th>
+              <th>{{ $t('tools.colTime') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -178,28 +178,30 @@
 
 <script setup lang="ts">
 import { computed, onActivated, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import type {
   DashboardToolItem,
   DashboardToolTimelinePoint,
-} from "../api/client";
-import BarChart from "../charts/BarChart.vue";
-import LineChart from "../charts/LineChart.vue";
-import PieChart from "../charts/PieChart.vue";
-import EmptyState from "../components/EmptyState.vue";
-import LoadingState from "../components/LoadingState.vue";
-import TimeRangePicker from "../components/TimeRangePicker.vue";
-import { useToolsStore } from "../stores/tools";
-import { formatNumber } from "../utils/format";
+} from "@/api/client";
+import BarChart from "@/charts/BarChart.vue";
+import LineChart from "@/charts/LineChart.vue";
+import PieChart from "@/charts/PieChart.vue";
+import EmptyState from "@/components/EmptyState.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import TimeRangePicker from "@/components/TimeRangePicker.vue";
+import { useToolsStore } from "@/stores/tools";
+import { formatNumber } from "@/utils/format";
 import {
   formatBucketLocal,
   formatTimestampShort,
   getRangeMs,
   type TimeRange,
-} from "../utils/timezone";
+} from "@/utils/timezone";
 
 // ── Store ──────────────────────────────────────────────────────────
 
 const store = useToolsStore();
+const { t } = useI18n();
 
 const selectedPeriod = ref<TimeRange>("7d");
 
@@ -309,12 +311,12 @@ const trendSeries = computed(() => {
   }
   return [
     {
-      name: "工具调用",
+      name: t("tools.seriesToolCalls"),
       data: labels.map((d) => callMap.get(d) ?? 0),
       color: "#3b82f6",
     },
     {
-      name: "失败调用",
+      name: t("tools.seriesFailedCalls"),
       data: labels.map((d) => failMap.get(d) ?? 0),
       color: "#ef4444",
     },
@@ -374,7 +376,7 @@ const durationLabels = computed(() =>
 );
 const durationSeries = computed(() => [
   {
-    name: "工具数",
+    name: t("tools.seriesToolCount"),
     data: durationHistData.value.map((b) => b.count),
     color: "#8b5cf6",
   },

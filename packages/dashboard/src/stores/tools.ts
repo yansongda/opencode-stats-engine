@@ -5,8 +5,9 @@ import {
   type DashboardToolsSummary,
   type DashboardToolTimelinePoint,
   fetchDashboardTools,
-} from "../api/client";
-import { getRangeMs, type TimeRange } from "../utils/timezone";
+} from "@/api/client";
+import i18n from "@/i18n";
+import { getRangeMs, type TimeRange } from "@/utils/timezone";
 
 const toolCalls = ref<DashboardToolItem[]>([]) as Ref<DashboardToolItem[]>;
 const toolSummary = ref<DashboardToolsSummary | null>(
@@ -67,7 +68,9 @@ export async function fetchTools(
       console.warn("[silent fetch] tools failed:", err);
     } else {
       error.value =
-        err instanceof Error ? err.message : "加载工具数据时发生未知错误";
+        err instanceof Error
+          ? err.message
+          : i18n.global.t("common.errorLoadTools");
     }
     return false;
   } finally {

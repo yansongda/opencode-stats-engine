@@ -6,32 +6,32 @@ const router = createRouter({
     {
       path: "/",
       name: "overview",
-      component: () => import("../views/OverviewView.vue"),
+      component: () => import("@/views/OverviewView.vue"),
     },
     {
       path: "/efficiency",
       name: "efficiency",
-      component: () => import("../views/EfficiencyView.vue"),
+      component: () => import("@/views/EfficiencyView.vue"),
     },
     {
       path: "/models",
       name: "models",
-      component: () => import("../views/ModelsView.vue"),
+      component: () => import("@/views/ModelsView.vue"),
     },
     {
       path: "/projects",
       name: "projects",
-      component: () => import("../views/ProjectsView.vue"),
+      component: () => import("@/views/ProjectsView.vue"),
     },
     {
       path: "/tools",
       name: "tools",
-      component: () => import("../views/ToolCallsView.vue"),
+      component: () => import("@/views/ToolCallsView.vue"),
     },
     {
       path: "/sessions",
       name: "sessions",
-      component: () => import("../views/SessionsView.vue"),
+      component: () => import("@/views/SessionsView.vue"),
     },
   ],
 });

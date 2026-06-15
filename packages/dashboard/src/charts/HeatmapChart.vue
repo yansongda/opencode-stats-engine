@@ -11,7 +11,8 @@
 <script setup lang="ts">
 import type { EChartsOption } from "echarts";
 import { computed } from "vue";
-import BaseChart from "./BaseChart.vue";
+import { useI18n } from "vue-i18n";
+import BaseChart from "@/charts/BaseChart.vue";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -50,10 +51,26 @@ const props = withDefaults(
     autoresize: true,
     theme: undefined,
     loading: false,
-    dayLabels: () => ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
+    dayLabels: undefined,
     minColor: "#ebedf0",
     maxColor: "#40c463",
   },
+);
+
+const { t } = useI18n();
+
+/** Day labels: use prop if provided, otherwise fall back to locale-aware defaults. */
+const effectiveDayLabels = computed(
+  () =>
+    props.dayLabels ?? [
+      t("components.monday"),
+      t("components.tuesday"),
+      t("components.wednesday"),
+      t("components.thursday"),
+      t("components.friday"),
+      t("components.saturday"),
+      t("components.sunday"),
+    ],
 );
 
 // ── Chart Option ───────────────────────────────────────────────────
@@ -86,8 +103,8 @@ const chartOption = computed<EChartsOption | null>(() => {
         const p = params as { data: [number, number, number] };
         if (!p.data) return "";
         const hour = p.data[0];
-        const day = props.dayLabels[p.data[1]] ?? `Day ${p.data[1]}`;
-        return `${day} ${hour}:00<br/>消息数: ${p.data[2]}`;
+        const day = effectiveDayLabels.value[p.data[1]] ?? `Day ${p.data[1]}`;
+        return `${day} ${hour}:00<br/>${t("components.heatmapTooltip", { count: p.data[2] })}`;
       },
     },
     grid: {
@@ -108,7 +125,7 @@ const chartOption = computed<EChartsOption | null>(() => {
     },
     yAxis: {
       type: "category",
-      data: props.dayLabels,
+      data: effectiveDayLabels.value,
       inverse: true,
       splitArea: { show: true },
       axisLabel: {

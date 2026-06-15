@@ -2,20 +2,20 @@
   <div class="view-container" data-testid="efficiency-view">
     <!-- Header -->
     <div class="view-header resp-header">
-      <h1 class="view-title">效率分析</h1>
+      <h1 class="view-title">{{ $t('efficiency.title') }}</h1>
       <TimeRangePicker v-model="selectedPeriod" />
     </div>
 
     <!-- Loading State (initial no-data load only) -->
-    <LoadingState v-if="loading && !efficiencyData" message="加载效率数据中..." test-id="efficiency-loading" />
+    <LoadingState v-if="loading && !efficiencyData" :message="$t('efficiency.loading')" test-id="efficiency-loading" />
 
     <!-- Error State (no data to display) -->
     <EmptyState
       v-else-if="error && !efficiencyData"
       variant="error"
-      title="数据加载失败"
+      :title="$t('common.dataLoadFailed')"
       :description="error"
-      action-label="重试"
+      :action-label="$t('common.retry')"
       test-id="efficiency-error"
       @action="() => fetchData()"
     />
@@ -25,27 +25,27 @@
     <!-- Efficiency Metric Cards -->
     <div class="metrics-grid resp-metrics-4">
       <MetricCard
-        label="平均会话时长"
+        :label="$t('efficiency.avgSessionDuration')"
         :value="avgSessionDuration"
-        subtitle="所有会话平均"
+        :subtitle="$t('efficiency.avgSessionDurationSubtitle')"
         test-id="metric-avg-duration"
       />
       <MetricCard
-        label="每会话成本"
+        :label="$t('efficiency.costPerSession')"
         :value="costPerSession"
-        subtitle="平均会话成本"
+        :subtitle="$t('efficiency.costPerSessionSubtitle')"
         test-id="metric-cost-per-task"
       />
       <MetricCard
-        label="每小时消息"
+        :label="$t('efficiency.messagesPerHour')"
         :value="messagesPerActiveHour"
-        subtitle="活跃时段消息密度"
+        :subtitle="$t('efficiency.messagesPerHourSubtitle')"
         test-id="metric-msg-per-hour"
       />
       <MetricCard
-        label="变更文件"
+        :label="$t('efficiency.changedFiles')"
         :value="filesChanged"
-        subtitle="总文件变更数"
+        :subtitle="$t('efficiency.changedFilesSubtitle')"
         test-id="metric-files-changed"
       />
     </div>
@@ -53,8 +53,8 @@
     <!-- Working Hour Heatmap -->
     <div class="chart-card" data-testid="heatmap-section">
       <div class="chart-card-header">
-        <span class="chart-card-title">工作时段分布</span>
-        <span class="chart-card-subtitle">消息活跃度按小时 × 星期</span>
+        <span class="chart-card-title">{{ $t('efficiency.workHoursDistribution') }}</span>
+        <span class="chart-card-subtitle">{{ $t('efficiency.workHoursSubtitle') }}</span>
       </div>
       <HeatmapChart
         :data="heatmapData"
@@ -68,15 +68,15 @@
     <!-- Timeline Tokens + Cost -->
     <div class="chart-card" data-testid="timeline-tokens-section">
       <div class="chart-card-header">
-        <span class="chart-card-title">Token 与成本趋势</span>
-        <span class="chart-card-subtitle">按时间段聚合</span>
+        <span class="chart-card-title">{{ $t('efficiency.tokenCostTrend') }}</span>
+        <span class="chart-card-subtitle">{{ $t('efficiency.tokenCostTrendSubtitle') }}</span>
       </div>
       <LineChart
         :x-data="timelineLabels"
         :series="timelineTokenSeries"
         height="260px"
         y-label="Token"
-        right-y-label="成本 ($)"
+        :right-y-label="$t('efficiency.costLabel')"
         :value-formatter="formatTokens"
         :right-value-formatter="formatCost"
         :tooltip-formatter="tokenCostTooltipFormatter"
@@ -86,8 +86,8 @@
     <!-- Code Changes -->
     <div class="chart-card" data-testid="code-changes-section">
       <div class="chart-card-header">
-        <span class="chart-card-title">代码变更趋势</span>
-        <span class="chart-card-subtitle">新增 / 删除 / 变更文件</span>
+        <span class="chart-card-title">{{ $t('efficiency.codeChangeTrend') }}</span>
+        <span class="chart-card-subtitle">{{ $t('efficiency.codeChangeTrendSubtitle') }}</span>
       </div>
       <LineChart
         :x-data="timelineLabels"
@@ -95,8 +95,8 @@
         height="260px"
         :show-area="true"
         :smooth="true"
-        y-label="行数"
-        right-y-label="变更文件"
+        :y-label="$t('efficiency.lineCount')"
+        :right-y-label="$t('efficiency.seriesFilesChanged')"
       />
     </div>
     </template>
@@ -105,24 +105,27 @@
 
 <script setup lang="ts">
 import { computed, onActivated, onMounted, ref, watch } from "vue";
-import type { DashboardEfficiencyHeatmapPoint } from "../api/client";
-import HeatmapChart from "../charts/HeatmapChart.vue";
-import LineChart from "../charts/LineChart.vue";
-import EmptyState from "../components/EmptyState.vue";
-import LoadingState from "../components/LoadingState.vue";
-import MetricCard from "../components/MetricCard.vue";
-import TimeRangePicker from "../components/TimeRangePicker.vue";
-import { useEfficiencyStore } from "../stores/efficiency";
-import { formatCost, formatTokens } from "../utils/format";
+import { useI18n } from "vue-i18n";
+import type { DashboardEfficiencyHeatmapPoint } from "@/api/client";
+import HeatmapChart from "@/charts/HeatmapChart.vue";
+import LineChart from "@/charts/LineChart.vue";
+import EmptyState from "@/components/EmptyState.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import MetricCard from "@/components/MetricCard.vue";
+import TimeRangePicker from "@/components/TimeRangePicker.vue";
+import { useEfficiencyStore } from "@/stores/efficiency";
+import { formatCost, formatTokens } from "@/utils/format";
 import {
   formatBucketLocal,
   getRangeMs,
   type TimeRange,
-} from "../utils/timezone";
+} from "@/utils/timezone";
 
 // ── Store ───────────────────────────────────────────────────────────
 const { efficiencyData, loading, error, lastFetchedAt, fetchEfficiency } =
   useEfficiencyStore();
+
+const { t } = useI18n();
 
 // ── State ──────────────────────────────────────────────────────────
 
@@ -162,10 +165,12 @@ watch(selectedPeriod, () => {
 function formatDuration(ms: number | null): string {
   if (ms === null || ms <= 0) return "—";
   const minutes = Math.round(ms / 60_000);
-  if (minutes < 60) return `${minutes} 分钟`;
+  if (minutes < 60) return t("efficiency.durationMinutes", { minutes });
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  return mins > 0 ? `${hours} 小时 ${mins} 分` : `${hours} 小时`;
+  return mins > 0
+    ? t("efficiency.durationHoursMin", { hours, mins })
+    : t("efficiency.durationHours", { hours });
 }
 
 function formatRate(value: number | null): string {
@@ -199,7 +204,15 @@ const filesChanged = computed(() => {
 
 // ── Working Hour Heatmap ───────────────────────────────────────────
 
-const dayLabels = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+const dayLabels = computed(() => [
+  t("components.monday"),
+  t("components.tuesday"),
+  t("components.wednesday"),
+  t("components.thursday"),
+  t("components.friday"),
+  t("components.saturday"),
+  t("components.sunday"),
+]);
 
 function mapHeatmapPoint(p: DashboardEfficiencyHeatmapPoint): {
   day: number;
@@ -233,7 +246,7 @@ const timelineTokenSeries = computed(() => {
       color: "#3b82f6",
     },
     {
-      name: "成本 ($)",
+      name: t("efficiency.seriesCost"),
       data: efficiencyData.value.timeline.map((p) =>
         Number((p.cost_usd ?? 0).toFixed(4)),
       ),
@@ -266,17 +279,17 @@ const codeChangesSeries = computed(() => {
   if (!efficiencyData.value) return [];
   return [
     {
-      name: "新增行",
+      name: t("efficiency.seriesLinesAdded"),
       data: efficiencyData.value.timeline.map((p) => p.lines_added),
       color: "#16a34a",
     },
     {
-      name: "删除行",
+      name: t("efficiency.seriesLinesDeleted"),
       data: efficiencyData.value.timeline.map((p) => p.lines_deleted),
       color: "#ef4444",
     },
     {
-      name: "变更文件",
+      name: t("efficiency.seriesFilesChanged"),
       data: efficiencyData.value.timeline.map((p) => p.files_changed),
       color: "#3b82f6",
       yAxisIndex: 1,

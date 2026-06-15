@@ -2,8 +2,9 @@ import { type Ref, ref } from "vue";
 import {
   type DashboardEfficiencyData,
   fetchDashboardEfficiency,
-} from "../api/client";
-import { getRangeMs, type TimeRange } from "../utils/timezone";
+} from "@/api/client";
+import i18n from "@/i18n";
+import { getRangeMs, type TimeRange } from "@/utils/timezone";
 
 const efficiencyData = ref<DashboardEfficiencyData | null>(
   null,
@@ -54,7 +55,9 @@ export async function fetchEfficiency(
       console.warn("[silent fetch] efficiency failed:", err);
     } else {
       error.value =
-        err instanceof Error ? err.message : "加载效率数据时发生未知错误";
+        err instanceof Error
+          ? err.message
+          : i18n.global.t("common.errorLoadEfficiency");
     }
     return false;
   } finally {

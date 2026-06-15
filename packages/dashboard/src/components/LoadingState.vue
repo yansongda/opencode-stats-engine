@@ -1,21 +1,28 @@
 <template>
   <div class="loading-state" :data-testid="testId">
     <div class="loading-spinner" />
-    <p v-if="message" class="loading-message">{{ message }}</p>
+    <p v-if="displayMessage" class="loading-message">{{ displayMessage }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
-withDefaults(
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
+
+const props = withDefaults(
   defineProps<{
     message?: string;
     testId?: string;
   }>(),
   {
-    message: "加载中...",
+    message: undefined,
     testId: "loading-state",
   },
 );
+
+const displayMessage = computed(() => props.message ?? t("components.loading"));
 </script>
 
 <style scoped>

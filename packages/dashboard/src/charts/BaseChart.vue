@@ -11,8 +11,8 @@
     />
     <EmptyState
       v-else
-      title="暂无数据"
-      description="开始使用 OpenCode 后，数据将自动显示在这里"
+      :title="$t('components.noData')"
+      :description="$t('components.noDataDesc')"
     />
   </div>
 </template>
@@ -37,7 +37,7 @@ import { use } from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { computed } from "vue";
 import VChart from "vue-echarts";
-import EmptyState from "../components/EmptyState.vue";
+import EmptyState from "@/components/EmptyState.vue";
 
 // Register ECharts components
 use([

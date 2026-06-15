@@ -2,7 +2,8 @@ import { type Ref, ref } from "vue";
 import {
   type DashboardSessionListItem,
   fetchDashboardSessions,
-} from "../api/client";
+} from "@/api/client";
+import i18n from "@/i18n";
 
 const sessions = ref<DashboardSessionListItem[]>([]) as Ref<
   DashboardSessionListItem[]
@@ -56,7 +57,9 @@ export async function fetchSessions(
   } catch (err) {
     if (!silent) {
       error.value =
-        err instanceof Error ? err.message : "加载会话数据时发生未知错误";
+        err instanceof Error
+          ? err.message
+          : i18n.global.t("common.errorLoadSessions");
     } else {
       console.warn(
         "[silent fetch] sessions failed:",

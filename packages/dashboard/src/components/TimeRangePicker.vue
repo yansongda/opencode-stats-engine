@@ -24,7 +24,11 @@
  * buttons and emits `update:modelValue`.
  */
 
-import type { TimeRange } from "../utils/timezone";
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+import type { TimeRange } from "@/utils/timezone";
+
+const { t } = useI18n();
 
 withDefaults(
   defineProps<{
@@ -37,12 +41,12 @@ const emit = defineEmits<{
   "update:modelValue": [value: TimeRange];
 }>();
 
-const periods: Array<{ value: TimeRange; label: string }> = [
-  { value: "1d", label: "今日" },
-  { value: "7d", label: "7 天" },
-  { value: "30d", label: "30 天" },
-  { value: "all", label: "全部" },
-];
+const periods = computed<Array<{ value: TimeRange; label: string }>>(() => [
+  { value: "1d", label: t("components.today") },
+  { value: "7d", label: t("components.sevenDays") },
+  { value: "30d", label: t("components.thirtyDays") },
+  { value: "all", label: t("components.allTime") },
+]);
 </script>
 
 <style scoped>

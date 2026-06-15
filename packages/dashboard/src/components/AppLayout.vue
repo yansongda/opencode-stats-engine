@@ -15,8 +15,8 @@
 </template>
 
 <script setup lang="ts">
-import type { RealtimeMode } from "../composables/useSSE";
-import AppNav from "./AppNav.vue";
+import AppNav from "@/components/AppNav.vue";
+import type { RealtimeMode } from "@/composables/useSSE";
 
 defineProps<{
   realtimeMode: RealtimeMode;

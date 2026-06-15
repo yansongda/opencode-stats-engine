@@ -1,20 +1,20 @@
 <template>
   <div class="view-container" data-testid="projects-view">
     <div class="view-header resp-header">
-      <h1 class="view-title">项目对比</h1>
+      <h1 class="view-title">{{ $t('projects.title') }}</h1>
       <TimeRangePicker v-model="selectedPeriod" />
     </div>
 
     <!-- Loading State (initial no-data only) -->
-    <LoadingState v-if="store.loading.value && store.projects.value.length === 0" message="加载项目数据中..." test-id="projects-loading" />
+    <LoadingState v-if="store.loading.value && store.projects.value.length === 0" :message="$t('projects.loading')" test-id="projects-loading" />
 
     <!-- Error State (no-data only; preserves content when data exists) -->
     <EmptyState
       v-else-if="store.error.value && store.projects.value.length === 0"
       variant="error"
-      title="数据加载失败"
+      :title="$t('common.dataLoadFailed')"
       :description="store.error.value"
-      action-label="重试"
+      :action-label="$t('common.retry')"
       test-id="projects-error"
       @action="refreshData"
     />
@@ -31,7 +31,7 @@
               :class="{ sorted: sortKey === 'project_path' }"
               @click="toggleSort('project_path')"
             >
-              项目路径
+              {{ $t('projects.colPath') }}
               <span class="sort-indicator">{{ sortIndicator('project_path') }}</span>
             </th>
             <th
@@ -39,7 +39,7 @@
               :class="{ sorted: sortKey === 'session_count' }"
               @click="toggleSort('session_count')"
             >
-              会话数
+              {{ $t('projects.colSessionCount') }}
               <span class="sort-indicator">{{ sortIndicator('session_count') }}</span>
             </th>
             <th
@@ -47,7 +47,7 @@
               :class="{ sorted: sortKey === 'message_count' }"
               @click="toggleSort('message_count')"
             >
-              消息数
+              {{ $t('projects.colMessageCount') }}
               <span class="sort-indicator">{{ sortIndicator('message_count') }}</span>
             </th>
             <th
@@ -63,11 +63,11 @@
               :class="{ sorted: sortKey === 'cost_usd' }"
               @click="toggleSort('cost_usd')"
             >
-              成本
+              {{ $t('projects.colCost') }}
               <span class="sort-indicator">{{ sortIndicator('cost_usd') }}</span>
             </th>
-            <th class="col-model">主模型</th>
-            <th class="col-date">最后活跃</th>
+            <th class="col-model">{{ $t('projects.colMainModel') }}</th>
+            <th class="col-date">{{ $t('projects.colLastActive') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -86,7 +86,7 @@
             <td class="col-date">{{ formatLastActive(project.last_event_at_ms) }}</td>
           </tr>
           <tr v-if="store.projects.value.length === 0 && !store.loading.value">
-            <td colspan="7" class="empty-state">暂无项目数据</td>
+            <td colspan="7" class="empty-state">{{ $t('projects.noData') }}</td>
           </tr>
         </tbody>
       </table>
@@ -97,15 +97,15 @@
       <!-- Project Activity Trend -->
       <div class="chart-card" data-testid="activity-trend-chart">
         <div class="chart-card-header">
-          <span class="chart-card-title">项目活跃度趋势</span>
-          <span class="chart-card-subtitle">仅显示消息最多的 6 个项目</span>
+          <span class="chart-card-title">{{ $t('projects.activityTrend') }}</span>
+          <span class="chart-card-subtitle">{{ $t('projects.activityTrendSubtitle') }}</span>
         </div>
         <LineChart
           :x-data="trendDateLabels"
           :series="trendSeries"
           :loading="store.loading.value"
           height="280px"
-          y-label="消息数"
+          :y-label="$t('projects.yLabelMessages')"
           :value-formatter="formatNumber"
           :smooth="true"
           :show-area="true"
@@ -116,8 +116,8 @@
 
     <div class="chart-card" data-testid="model-distribution">
       <div class="chart-card-header">
-        <h3 class="chart-card-title">模型分布</h3>
-        <span class="chart-card-subtitle">仅显示消息最多的 8 个项目 × 5 个模型</span>
+        <h3 class="chart-card-title">{{ $t('projects.modelDistribution') }}</h3>
+        <span class="chart-card-subtitle">{{ $t('projects.modelDistributionSubtitle') }}</span>
       </div>
       <div class="shared-legend" v-if="topModels.length > 1">
         <button
@@ -134,26 +134,26 @@
       </div>
       <div class="distribution-panes">
         <div class="chart-pane">
-          <h4 class="chart-pane-title">会话分布</h4>
+          <h4 class="chart-pane-title">{{ $t('projects.sessionDistribution') }}</h4>
           <BarChart
             :x-data="modelProjectNames"
             :series="sessionSeries"
             :loading="store.loading.value"
             height="280px"
             :stacked="true"
-            y-label="会话数"
+            :y-label="$t('projects.yLabelSessions')"
             :show-legend="false"
           />
         </div>
         <div class="chart-pane">
-          <h4 class="chart-pane-title">消息分布</h4>
+          <h4 class="chart-pane-title">{{ $t('projects.messageDistribution') }}</h4>
           <BarChart
             :x-data="modelProjectNames"
             :series="messageSeries"
             :loading="store.loading.value"
             height="280px"
             :stacked="true"
-            y-label="消息数"
+            :y-label="$t('projects.yLabelMessages')"
             :show-legend="false"
           />
         </div>
@@ -165,23 +165,25 @@
 
 <script setup lang="ts">
 import { computed, onActivated, onMounted, ref, watch } from "vue";
-import BarChart from "../charts/BarChart.vue";
-import LineChart from "../charts/LineChart.vue";
-import EmptyState from "../components/EmptyState.vue";
-import LoadingState from "../components/LoadingState.vue";
-import TimeRangePicker from "../components/TimeRangePicker.vue";
-import { useProjectsStore } from "../stores/projects";
-import { formatCost, formatNumber, formatTokens } from "../utils/format";
+import { useI18n } from "vue-i18n";
+import BarChart from "@/charts/BarChart.vue";
+import LineChart from "@/charts/LineChart.vue";
+import EmptyState from "@/components/EmptyState.vue";
+import LoadingState from "@/components/LoadingState.vue";
+import TimeRangePicker from "@/components/TimeRangePicker.vue";
+import { useProjectsStore } from "@/stores/projects";
+import { formatCost, formatNumber, formatTokens } from "@/utils/format";
 import {
   formatBucketLocal,
   formatRelativeTimeFromDate,
   getRangeMs,
   type TimeRange,
-} from "../utils/timezone";
+} from "@/utils/timezone";
 
 // ── Store ──────────────────────────────────────────────────────────
 
 const store = useProjectsStore();
+const { t } = useI18n();
 
 // ── Period ─────────────────────────────────────────────────────────
 
@@ -411,10 +413,10 @@ function buildSeries(
   }));
 }
 
-/** Session-count series for 会话分布. */
+/** Session-count series for session distribution. */
 const sessionSeries = computed(() => buildSeries((item) => item.sessions));
 
-/** Message-count series for 消息分布. */
+/** Message-count series for message distribution. */
 const messageSeries = computed(() => buildSeries((item) => item.messages));
 
 // ── Formatters ─────────────────────────────────────────────────────
@@ -427,7 +429,7 @@ function truncatePath(path: string): string {
 }
 
 function formatLastActive(ts: number | null): string {
-  if (ts === null) return "—";
+  if (ts === null) return t("common.dashPlaceholder");
   return formatRelativeTimeFromDate(new Date(ts));
 }
 </script>

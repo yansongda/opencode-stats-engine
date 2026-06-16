@@ -64,24 +64,6 @@ export function truncateId(id: string, options?: TruncateOptions): string {
 }
 
 /**
- * Truncate a project path, preserving the tail (most specific part).
- *
- * @example
- * truncateProject("/Users/foo/bar/baz") // "…foo/bar/baz" (if threshold exceeded)
- */
-export function truncateProject(
-  path: string,
-  options?: { threshold?: number; tail?: number; ellipsis?: string },
-): string {
-  const threshold = options?.threshold ?? 30;
-  const tail = options?.tail ?? 28;
-  const ellipsis = options?.ellipsis ?? "…";
-
-  if (path.length <= threshold) return path;
-  return `${ellipsis}${path.slice(-tail)}`;
-}
-
-/**
  * Truncate a session ID with head-tail strategy (common display pattern).
  *
  * @example
@@ -101,34 +83,48 @@ export function truncateSessionId(
 /**
  * Truncate a file/project path, preserving meaningful segments.
  *
- * Strategy:
- * - Short paths (≤ threshold) returned as-is
- * - Paths with few segments: tail truncation
- * - Paths with many segments: keep first + "…" + last 2 segments
+ * Strategies:
+ * - `"segments"`: keep first + "…" + last 2 segments (for deep paths)
+ * - `"tail"`: simple tail truncation (for project names)
  *
  * @example
- * truncatePath("/Users/foo/bar/baz") // "…foo/bar/baz" (tail truncation)
+ * truncatePath("/Users/foo/bar/baz") // "…foo/bar/baz" (short path)
  * truncatePath("/a/b/c/d/e/f/g") // "/a/…/f/g" (segment compression)
+ * truncatePath("/a/b/c/d", { strategy: "tail" }) // "…/c/d" (tail truncation)
  */
 export function truncatePath(
   path: string,
-  options?: { threshold?: number; ellipsis?: string; preserveFirst?: boolean },
+  options?: {
+    threshold?: number;
+    ellipsis?: string;
+    preserveFirst?: boolean;
+    strategy?: "segments" | "tail";
+  },
 ): string {
   const threshold = options?.threshold ?? 35;
   const ellipsis = options?.ellipsis ?? "…";
-  const preserveFirst = options?.preserveFirst ?? true;
+  const strategy = options?.strategy ?? "segments";
 
   if (path.length <= threshold) return path;
 
+  if (strategy === "tail") {
+    return `${ellipsis}${path.slice(-(threshold - ellipsis.length))}`;
+  }
+
+  // strategy === "segments"
+  const preserveFirst = options?.preserveFirst ?? true;
+  const hasRoot = path.startsWith("/");
   const parts = path.split("/").filter(Boolean);
   if (parts.length <= 2) return path;
   if (parts.length <= 3) {
     return `${ellipsis}${path.slice(-(threshold - ellipsis.length))}`;
   }
 
+  const prefix = hasRoot ? "/" : "";
+
   if (preserveFirst) {
-    return `${parts[0]}${ellipsis}/${parts.slice(-2).join("/")}`;
+    return `${prefix}${parts[0]}${ellipsis}/${parts.slice(-2).join("/")}`;
   }
 
-  return `${ellipsis}/${parts.slice(-2).join("/")}`;
+  return `${prefix}${ellipsis}/${parts.slice(-2).join("/")}`;
 }

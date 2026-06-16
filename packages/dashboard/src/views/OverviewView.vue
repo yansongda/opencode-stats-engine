@@ -478,15 +478,6 @@ const modelMessageTooltip = (params: unknown): string => {
 
 const MAX_PIE_SLICES = 8;
 
-function formatProjectPath(path: string): string {
-  if (!path) return "";
-  return truncatePath(path, {
-    threshold: 999,
-    ellipsis: "...",
-    preserveFirst: false,
-  });
-}
-
 function buildProjectPieData(
   items: DashboardOverviewProjectDistributionItem[],
   accessor: (p: DashboardOverviewProjectDistributionItem) => number,
@@ -498,7 +489,7 @@ function buildProjectPieData(
   const top = sorted.slice(0, MAX_PIE_SLICES);
   const rest = sorted.slice(MAX_PIE_SLICES);
   const result: Array<{ name: string; value: number }> = top.map((p) => ({
-    name: formatProjectPath(p.project_path ?? ""),
+    name: truncatePath(p.project_path ?? ""),
     value: precision > 0 ? Number(accessor(p).toFixed(precision)) : accessor(p),
   }));
   if (rest.length > 0) {

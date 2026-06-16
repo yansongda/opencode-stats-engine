@@ -40,7 +40,7 @@
       </select>
       <select v-model="filterProject" class="filter-select" data-testid="filter-project">
         <option value="all">{{ $t('sessions.filterAllProjects') }}</option>
-        <option v-for="p in uniqueProjects" :key="p" :value="p">{{ truncateProject(p) }}</option>
+        <option v-for="p in uniqueProjects" :key="p" :value="p">{{ truncatePath(p, { strategy: "tail" }) }}</option>
       </select>
       <input
         v-model="dateFrom"
@@ -154,7 +154,7 @@
               {{ session.title ?? '\u2014' }}
             </td>
             <td class="col-project" :title="session.project_path ?? ''">
-              {{ truncateProject(session.project_path ?? '\u2014') }}
+              {{ truncatePath(session.project_path ?? '\u2014', { strategy: "tail" }) }}
             </td>
             <td class="col-model">{{ session.primary_model ?? '\u2014' }}</td>
             <td class="col-tokens">{{ formatTokens(session.total_tokens) }}</td>
@@ -241,7 +241,7 @@
           </div>
           <div class="detail-item">
             <span class="detail-label">{{ $t('sessions.labelProject') }}</span>
-            <span class="detail-value" :title="selectedDetail.session.project_path ?? ''">{{ truncateProject(selectedDetail.session.project_path ?? '\u2014') }}</span>
+            <span class="detail-value" :title="selectedDetail.session.project_path ?? ''">{{ truncatePath(selectedDetail.session.project_path ?? '\u2014', { strategy: "tail" }) }}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">{{ $t('sessions.labelModel') }}</span>
@@ -487,7 +487,7 @@ import {
   formatTokens,
 } from "@/utils/format";
 import { formatTimestamp, parseLocalDateInput } from "@/utils/timezone";
-import { truncateProject, truncateSessionId } from "@/utils/truncate";
+import { truncatePath, truncateSessionId } from "@/utils/truncate";
 
 // ── i18n ────────────────────────────────────────────────────────────────
 

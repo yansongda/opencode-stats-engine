@@ -285,6 +285,7 @@ import {
   getRangeMs,
   type TimeRange,
 } from "@/utils/timezone";
+import { truncatePath } from "@/utils/truncate";
 
 // ── Theme-aware colors ─────────────────────────────────────────────
 
@@ -479,9 +480,11 @@ const MAX_PIE_SLICES = 8;
 
 function formatProjectPath(path: string): string {
   if (!path) return "";
-  const segments = path.split("/").filter(Boolean);
-  if (segments.length <= 2) return segments.join("/");
-  return `.../${segments.slice(-2).join("/")}`;
+  return truncatePath(path, {
+    threshold: 999,
+    ellipsis: "...",
+    preserveFirst: false,
+  });
 }
 
 function buildProjectPieData(

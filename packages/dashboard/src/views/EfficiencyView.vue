@@ -115,8 +115,17 @@ import MetricCard from "@/components/MetricCard.vue";
 import TimeRangePicker from "@/components/TimeRangePicker.vue";
 import { useTheme } from "@/composables/useTheme";
 import { useEfficiencyStore } from "@/stores/efficiency";
-import { getChartColors, HEATMAP_COLORS_LIGHT, HEATMAP_COLORS_DARK } from "@/utils/chartColors";
-import { formatCost, formatTokens } from "@/utils/format";
+import {
+  getChartColors,
+  HEATMAP_COLORS_DARK,
+  HEATMAP_COLORS_LIGHT,
+} from "@/utils/chartColors";
+import {
+  createDurationI18n,
+  formatCost,
+  formatDuration,
+  formatTokens,
+} from "@/utils/format";
 import {
   formatBucketLocal,
   getRangeMs,
@@ -168,15 +177,17 @@ watch(selectedPeriod, () => {
 
 // ── Formatting Helpers ─────────────────────────────────────────────
 
-function formatDuration(ms: number | null): string {
-  if (ms === null || ms <= 0) return "—";
-  const minutes = Math.round(ms / 60_000);
-  if (minutes < 60) return t("efficiency.durationMinutes", { minutes });
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return mins > 0
-    ? t("efficiency.durationHoursMin", { hours, mins })
-    : t("efficiency.durationHours", { hours });
+const efficiencyDurationI18n = createDurationI18n(t, {
+  sec: "efficiency.durationMinutes",
+  minSec: "efficiency.durationMinutes",
+  hourMin: "efficiency.durationHoursMin",
+  minutes: "efficiency.durationMinutes",
+  hours: "efficiency.durationHours",
+  hoursMin: "efficiency.durationHoursMin",
+});
+
+function formatEfficiencyDuration(ms: number | null | undefined): string {
+  return formatDuration(ms, { precision: "min", i18n: efficiencyDurationI18n });
 }
 
 function formatRate(value: number | null): string {
@@ -190,7 +201,7 @@ const summary = computed(() => efficiencyData.value?.summary ?? null);
 
 const avgSessionDuration = computed(() => {
   if (!summary.value) return "—";
-  return formatDuration(summary.value.avg_session_duration_ms);
+  return formatEfficiencyDuration(summary.value.avg_session_duration_ms);
 });
 
 const costPerSession = computed(() => {

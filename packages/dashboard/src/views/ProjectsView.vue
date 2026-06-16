@@ -194,13 +194,18 @@ import TimeRangePicker from "@/components/TimeRangePicker.vue";
 import { useTheme } from "@/composables/useTheme";
 import { useProjectsStore } from "@/stores/projects";
 import { getChartColors } from "@/utils/chartColors";
-import { formatCost, formatNumber, formatTokens } from "@/utils/format";
+import {
+  formatCost,
+  formatNumber,
+  formatTimestamp,
+  formatTokens,
+} from "@/utils/format";
 import {
   formatBucketLocal,
-  formatRelativeTimeFromDate,
   getRangeMs,
   type TimeRange,
 } from "@/utils/timezone";
+import { truncatePath } from "@/utils/truncate";
 
 // ── Store ──────────────────────────────────────────────────────────
 
@@ -500,16 +505,9 @@ const messageSeries = computed(() => buildSeries((item) => item.messages));
 
 // ── Formatters ─────────────────────────────────────────────────────
 
-function truncatePath(path: string): string {
-  if (path.length <= 35) return path;
-  const parts = path.split("/");
-  if (parts.length <= 3) return `…${path.slice(-33)}`;
-  return `${parts[0]}/…/${parts.slice(-2).join("/")}`;
-}
-
 function formatLastActive(ts: number | null): string {
   if (ts === null) return t("common.dashPlaceholder");
-  return formatRelativeTimeFromDate(new Date(ts));
+  return formatTimestamp(ts);
 }
 </script>
 

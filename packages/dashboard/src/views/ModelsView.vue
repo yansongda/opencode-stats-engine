@@ -39,6 +39,15 @@
             <th class="col-sortable col-right" @click="toggleSort('total_tokens')">
               Token <span class="sort-arrow">{{ sortIndicator('total_tokens') }}</span>
             </th>
+            <th class="col-sortable col-right" @click="toggleSort('cache_read')">
+              {{ $t('models.colCacheRead') }} <span class="sort-arrow">{{ sortIndicator('cache_read') }}</span>
+            </th>
+            <th class="col-sortable col-right" @click="toggleSort('cache_write')">
+              {{ $t('models.colCacheWrite') }} <span class="sort-arrow">{{ sortIndicator('cache_write') }}</span>
+            </th>
+            <th class="col-sortable col-right" @click="toggleSort('reasoning_tokens')">
+              {{ $t('models.colReasoning') }} <span class="sort-arrow">{{ sortIndicator('reasoning_tokens') }}</span>
+            </th>
             <th class="col-sortable col-right" @click="toggleSort('cost_usd')">
               {{ $t('models.colCost') }} <span class="sort-arrow">{{ sortIndicator('cost_usd') }}</span>
             </th>
@@ -46,19 +55,22 @@
               {{ $t('models.colAvgCost') }} <span class="sort-arrow">{{ sortIndicator('avg_cost_per_message') }}</span>
             </th>
             <th class="col-sortable col-right" @click="toggleSort('error_count')">
-              {{ $t('models.colErrorRate') }} <span class="sort-arrow">{{ sortIndicator('error_count') }}</span>
+              <span :title="$t('models.messageErrorRateTip')">{{ $t('models.messageErrorRate') }}</span> <span class="sort-arrow">{{ sortIndicator('error_count') }}</span>
             </th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="sortedModels.length === 0">
-            <td colspan="7" class="empty-row">{{ $t('models.noData') }}</td>
+            <td colspan="10" class="empty-row">{{ $t('models.noData') }}</td>
           </tr>
           <tr v-for="m in sortedModels" :key="m.model" :data-testid="`model-row-${m.model}`">
             <td class="col-monospace">{{ m.model }}</td>
             <td class="col-right">{{ formatNumber(m.session_count) }}</td>
             <td class="col-right">{{ formatNumber(m.message_count) }}</td>
             <td class="col-right">{{ formatTokens(m.total_tokens) }}</td>
+            <td class="col-right">{{ formatNumber(m.cache_read) }}</td>
+            <td class="col-right">{{ formatNumber(m.cache_write) }}</td>
+            <td class="col-right">{{ formatNumber(m.reasoning_tokens) }}</td>
             <td class="col-right">{{ formatCost(m.cost_usd) }}</td>
             <td class="col-right">{{ formatCost(m.avg_cost_per_message ?? 0) }}</td>
             <td class="col-right">
@@ -150,7 +162,9 @@ import ScatterChart from "@/charts/ScatterChart.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import LoadingState from "@/components/LoadingState.vue";
 import TimeRangePicker from "@/components/TimeRangePicker.vue";
+import { useTheme } from "@/composables/useTheme";
 import { useModelsStore } from "@/stores/models";
+import { getChartColors } from "@/utils/chartColors";
 import { formatCost, formatNumber, formatTokens } from "@/utils/format";
 import {
   formatBucketLocal,
@@ -223,35 +237,37 @@ const sortedModels = computed(() => {
   });
 });
 
-// ── Chart Data: Token Breakdown ────────────────────────────────────────
-const CHART_COLORS = [
-  "#3b82f6",
-  "#16a34a",
-  "#d97706",
-  "#dc2626",
-  "#8b5cf6",
-  "#ec4899",
-];
+// ── Theme-aware chart colors ───────────────────────────────────────────
+const { resolvedTheme } = useTheme();
+const chartColors = computed(() => getChartColors(resolvedTheme.value));
 
-const tokenChartLabels = computed(() =>
-  store.models.value.map((m) => truncateModel(m.model)),
-);
+const tokenChartLabels = computed(() => store.models.value.map((m) => m.model));
 
 const tokenChartSeries = computed(() => [
   {
     name: "Input",
     data: store.models.value.map((m) => m.input_tokens),
-    color: CHART_COLORS[0],
+    color: chartColors.value[0],
   },
   {
     name: "Output",
     data: store.models.value.map((m) => m.output_tokens),
-    color: CHART_COLORS[1],
+    color: chartColors.value[1],
+  },
+  {
+    name: "Cache Read",
+    data: store.models.value.map((m) => m.cache_read),
+    color: chartColors.value[2],
+  },
+  {
+    name: "Cache Write",
+    data: store.models.value.map((m) => m.cache_write),
+    color: chartColors.value[3],
   },
   {
     name: "Reasoning",
     data: store.models.value.map((m) => m.reasoning_tokens),
-    color: CHART_COLORS[2],
+    color: chartColors.value[4],
   },
 ]);
 
@@ -275,14 +291,14 @@ const costTrendModels = computed(() => {
 const costChartSeries = computed(() => {
   const dateSet = costTrendDates.value;
   return costTrendModels.value.map((model, i) => ({
-    name: truncateModel(model),
+    name: model,
     data: dateSet.map((d) => {
       const pt = store.modelsCostTrend.value.find(
         (p) => p.date === d && p.model === model,
       );
       return pt?.cost_usd ?? 0;
     }),
-    color: CHART_COLORS[i % CHART_COLORS.length],
+    color: chartColors.value[i % chartColors.value.length],
   }));
 });
 
@@ -291,7 +307,7 @@ const messageSessionChartLabels = computed(() =>
   [...store.models.value]
     .sort((a, b) => b.session_count - a.session_count)
     .slice(0, 8)
-    .map((m) => truncateModel(m.model)),
+    .map((m) => m.model),
 );
 
 const messageSessionChartSeries = computed(() => {
@@ -302,13 +318,13 @@ const messageSessionChartSeries = computed(() => {
     {
       name: t("models.seriesSessions"),
       data: top8.map((m) => m.session_count),
-      color: "#3b82f6",
+      color: chartColors.value[0],
       yAxisIndex: 0,
     },
     {
       name: t("models.seriesMessages"),
       data: top8.map((m) => m.message_count),
-      color: "#10b981",
+      color: chartColors.value[1],
       yAxisIndex: 1,
     },
   ];
@@ -317,7 +333,7 @@ const messageSessionChartSeries = computed(() => {
 // ── Chart Data: Scatter (Cost vs Output) ───────────────────────────────
 const scatterData = computed(() =>
   store.models.value.map((m) => ({
-    name: truncateModel(m.model),
+    name: m.model,
     x: m.cost_usd,
     y: m.output_tokens,
     size: Math.max(8, Math.min(30, m.session_count / 2)),
@@ -325,12 +341,6 @@ const scatterData = computed(() =>
 );
 
 // ── Formatting Helpers ─────────────────────────────────────────────────
-function truncateModel(model: string): string {
-  if (model.length <= 20) return model;
-  // Show last 18 chars with ellipsis prefix
-  return `…${model.slice(-18)}`;
-}
-
 function formatErrorRate(m: DashboardModelItem): string {
   if (m.error_rate === null || m.error_rate === undefined) return "—";
   return `${(m.error_rate * 100).toFixed(1)}%`;
@@ -392,14 +402,14 @@ function errorRateClass(m: DashboardModelItem): string {
 
 .data-table td {
   padding: var(--spacing-2) var(--spacing-3);
-  border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+  border-bottom: 1px solid var(--border);
   color: var(--text);
   white-space: nowrap;
   text-align: center;
 }
 
 .data-table tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.03);
+  background-color: var(--surface-hover);
 }
 
 .col-sortable {

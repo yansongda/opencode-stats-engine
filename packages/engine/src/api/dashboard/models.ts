@@ -37,6 +37,8 @@ interface ModelStatsRow {
   input_tokens: number;
   output_tokens: number;
   reasoning_tokens: number;
+  cache_read: number;
+  cache_write: number;
   total_tokens: number;
   cost_usd: number;
   error_count: number;
@@ -60,6 +62,8 @@ function queryModelStats(
         COALESCE(SUM(m.input_tokens), 0) as input_tokens,
         COALESCE(SUM(m.output_tokens), 0) as output_tokens,
         COALESCE(SUM(m.reasoning_tokens), 0) as reasoning_tokens,
+        COALESCE(SUM(m.cache_read), 0) as cache_read,
+        COALESCE(SUM(m.cache_write), 0) as cache_write,
         COALESCE(SUM(m.total_tokens), 0) as total_tokens,
         COALESCE(SUM(m.cost_usd), 0) as cost_usd,
         COALESCE(SUM(CASE WHEN m.has_error = 1 THEN 1 ELSE 0 END), 0) as error_count
@@ -79,6 +83,8 @@ function queryModelStats(
     input_tokens: toNum(row.input_tokens),
     output_tokens: toNum(row.output_tokens),
     reasoning_tokens: toNum(row.reasoning_tokens),
+    cache_read: toNum(row.cache_read),
+    cache_write: toNum(row.cache_write),
     total_tokens: toNum(row.total_tokens),
     cost_usd: toNum(row.cost_usd),
     error_count: toNum(row.error_count),
@@ -131,6 +137,8 @@ function buildModelItem(row: ModelStatsRow): DashboardModelItem {
     input_tokens: row.input_tokens,
     output_tokens: row.output_tokens,
     reasoning_tokens: row.reasoning_tokens,
+    cache_read: row.cache_read,
+    cache_write: row.cache_write,
     total_tokens: row.total_tokens,
     cost_usd: row.cost_usd,
     avg_cost_per_message: safeDivide(row.cost_usd, row.message_count, 6),

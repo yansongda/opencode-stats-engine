@@ -230,8 +230,7 @@
       </div>
 
       <!-- Basic Info -->
-      <div class="detail-section">
-        <h3 class="detail-section-title">{{ $t('sessions.sectionBasicInfo') }}</h3>
+      <CollapsibleSection section-key="basic-info" :title="$t('sessions.sectionBasicInfo')" :collapsible="false">
         <div class="detail-grid">
           <div class="detail-item">
             <span class="detail-label">{{ $t('sessions.labelTitle') }}</span>
@@ -266,11 +265,10 @@
             <span class="detail-value">{{ formatTimestamp(selectedDetail.session.last_event_at_ms) }}</span>
           </div>
         </div>
-      </div>
+      </CollapsibleSection>
 
       <!-- Token Stats -->
-      <div class="detail-section">
-        <h3 class="detail-section-title">{{ $t('sessions.sectionTokenStats') }}</h3>
+      <CollapsibleSection section-key="token-stats" :title="$t('sessions.sectionTokenStats')" :collapsible="false">
         <div class="detail-grid">
           <div class="detail-item">
             <span class="detail-label">{{ $t('sessions.labelTotal') }}</span>
@@ -301,11 +299,10 @@
             <span class="detail-value detail-value-highlight">{{ formatCost(selectedDetail.session.total_cost_usd) }}</span>
           </div>
         </div>
-      </div>
+      </CollapsibleSection>
 
       <!-- Messages & Tools -->
-      <div class="detail-section">
-        <h3 class="detail-section-title">{{ $t('sessions.sectionMessagesTools') }}</h3>
+      <CollapsibleSection section-key="messages-tools" :title="$t('sessions.sectionMessagesTools')" :collapsible="false">
         <div class="detail-grid">
           <div class="detail-item">
             <span class="detail-label">{{ $t('sessions.labelUserMessages') }}</span>
@@ -336,11 +333,10 @@
             <span class="detail-value">{{ formatNumber(selectedDetail.session.error_count) }}</span>
           </div>
         </div>
-      </div>
+      </CollapsibleSection>
 
       <!-- Model Usage -->
-      <div v-if="selectedDetail.model_usage.length > 0" class="detail-section">
-        <h3 class="detail-section-title">{{ $t('sessions.sectionModelUsage') }}</h3>
+      <CollapsibleSection v-if="selectedDetail.model_usage.length > 0" section-key="model-usage" :title="$t('sessions.sectionModelUsage')" :collapsible="false">
         <div class="table-wrapper">
           <table class="data-table detail-table">
             <thead>
@@ -367,11 +363,10 @@
             </tbody>
           </table>
         </div>
-      </div>
+      </CollapsibleSection>
 
       <!-- Tool Calls -->
-      <div v-if="selectedDetail.tool_calls.length > 0" class="detail-section">
-        <h3 class="detail-section-title">{{ $t('sessions.sectionToolCalls') }}</h3>
+      <CollapsibleSection v-if="selectedDetail.tool_calls.length > 0" section-key="tool-calls" :title="$t('sessions.sectionToolCalls')">
         <div class="table-wrapper">
           <table class="data-table detail-table">
             <thead>
@@ -398,11 +393,10 @@
             </tbody>
           </table>
         </div>
-      </div>
+      </CollapsibleSection>
 
       <!-- Messages Metadata -->
-      <div v-if="selectedDetail.messages.length > 0" class="detail-section">
-        <h3 class="detail-section-title">{{ $t('sessions.sectionMessageMetadata') }}</h3>
+      <CollapsibleSection v-if="selectedDetail.messages.length > 0" section-key="message-metadata" :title="$t('sessions.sectionMessageMetadata')">
         <div class="table-wrapper">
           <table class="data-table detail-table">
             <thead>
@@ -432,11 +426,10 @@
             </tbody>
           </table>
         </div>
-      </div>
+      </CollapsibleSection>
 
       <!-- Errors -->
-      <div v-if="selectedDetail.errors.length > 0" class="detail-section">
-        <h3 class="detail-section-title">{{ $t('sessions.sectionErrors') }}</h3>
+      <CollapsibleSection v-if="selectedDetail.errors.length > 0" section-key="errors" :title="$t('sessions.sectionErrors')">
         <div class="table-wrapper">
           <table class="data-table detail-table">
             <thead>
@@ -455,7 +448,7 @@
             </tbody>
           </table>
         </div>
-      </div>
+      </CollapsibleSection>
         </template>
       </aside>
     </div>
@@ -479,6 +472,7 @@ import {
   type DashboardSessionListItem,
   fetchDashboardSessionDetail,
 } from "@/api/client";
+import CollapsibleSection from "@/components/CollapsibleSection.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import LoadingState from "@/components/LoadingState.vue";
 import { useSessionsStore } from "@/stores/sessions";
@@ -969,25 +963,25 @@ const StatusBadge = {
 }
 
 .data-table tbody tr.clickable-row:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-hover);
 }
 
 /* Deleted row highlight */
 .data-table tbody tr.row-deleted {
-  background: rgba(239, 68, 68, 0.05);
+  background: var(--danger-subtle);
 }
 
 .data-table tbody tr.row-deleted:hover {
-  background: rgba(239, 68, 68, 0.08);
+  background: var(--danger-subtle);
 }
 
 /* Selected row highlight */
 .data-table tbody tr.row-selected {
-  background: rgba(59, 130, 246, 0.08);
+  background: var(--primary-subtle);
 }
 
 .data-table tbody tr.row-selected:hover {
-  background: rgba(59, 130, 246, 0.12);
+  background: var(--primary-subtle);
 }
 
 /* Column widths */
@@ -1037,7 +1031,7 @@ const StatusBadge = {
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
   font-size: var(--text-sm);
   color: var(--primary);
-  background: rgba(59, 130, 246, 0.08);
+  background: var(--primary-subtle);
   padding: 1px var(--spacing-1);
   border-radius: var(--radius-sm);
   cursor: help;
@@ -1064,12 +1058,12 @@ const StatusBadge = {
 
 :deep(.badge-active) {
   color: var(--success);
-  background: rgba(34, 197, 94, 0.12);
+  background: var(--success-subtle);
 }
 
 :deep(.badge-deleted) {
   color: var(--danger);
-  background: rgba(239, 68, 68, 0.12);
+  background: var(--danger-subtle);
 }
 
 /* ── Pagination ─────────────────────────────────────────────────────── */
@@ -1101,7 +1095,7 @@ const StatusBadge = {
   position: absolute;
   inset: 0;
   border: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--overlay-bg);
   cursor: pointer;
   pointer-events: auto;
 }
@@ -1114,7 +1108,7 @@ const StatusBadge = {
   height: 100%;
   background: var(--surface);
   border-left: 1px solid var(--border);
-  box-shadow: -24px 0 48px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-lg);
   overflow-y: auto;
   pointer-events: auto;
 }
@@ -1148,7 +1142,7 @@ const StatusBadge = {
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
   font-size: var(--text-sm);
   color: var(--primary);
-  background: rgba(59, 130, 246, 0.08);
+  background: var(--primary-subtle);
   padding: 1px var(--spacing-2);
   border-radius: var(--radius-sm);
 }
@@ -1160,6 +1154,11 @@ const StatusBadge = {
 
 .detail-section:last-child {
   border-bottom: none;
+}
+
+.detail-drawer :deep(.collapsible-section) {
+  padding-left: var(--spacing-4);
+  padding-right: var(--spacing-4);
 }
 
 .detail-section-title {
@@ -1239,7 +1238,7 @@ const StatusBadge = {
 }
 
 .btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
 }
 
 .btn:disabled {
@@ -1250,7 +1249,7 @@ const StatusBadge = {
 .btn-primary {
   background: var(--primary);
   border-color: var(--primary);
-  color: #fff;
+  color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -1263,7 +1262,7 @@ const StatusBadge = {
 }
 
 .btn-ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
 }
 
 .btn-sm {

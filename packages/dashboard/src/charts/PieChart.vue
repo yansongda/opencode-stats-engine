@@ -12,6 +12,11 @@
 import type { EChartsOption } from "echarts";
 import { computed } from "vue";
 import BaseChart from "@/charts/BaseChart.vue";
+import { useTheme } from "@/composables/useTheme";
+import {
+  CHART_TEXT_COLOR_DARK,
+  CHART_TEXT_COLOR_LIGHT,
+} from "@/utils/chartColors";
 
 // ── Props ──────────────────────────────────────────────────────────
 
@@ -59,8 +64,13 @@ const props = withDefaults(
 
 // ── Chart Option ───────────────────────────────────────────────────
 
+const { resolvedTheme } = useTheme();
+
 const chartOption = computed<EChartsOption | null>(() => {
   if (props.data.length === 0) return null;
+
+  const isDark = resolvedTheme.value === "dark";
+  const textColor = isDark ? CHART_TEXT_COLOR_DARK : CHART_TEXT_COLOR_LIGHT;
 
   const radius = props.donut
     ? [`${Math.round(props.innerRadius * 100)}%`, "70%"]
@@ -87,9 +97,7 @@ const chartOption = computed<EChartsOption | null>(() => {
     },
     legend: {
       ...legendConfig,
-      textStyle: {
-        fontSize: 12,
-      },
+      textStyle: { color: textColor },
     },
     series: [
       {
@@ -102,14 +110,15 @@ const chartOption = computed<EChartsOption | null>(() => {
         data: props.data,
         label: {
           show: props.showLabel,
+          color: textColor,
           fontSize: 11,
+          textShadowColor: "transparent",
+          textShadowBlur: 0,
+          textBorderColor: "transparent",
+          textBorderWidth: 0,
         },
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowOffsetX: 0,
-            shadowColor: "rgba(0, 0, 0, 0.3)",
-          },
+        labelLine: {
+          lineStyle: { color: textColor },
         },
       },
     ],

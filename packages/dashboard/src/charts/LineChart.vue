@@ -12,6 +12,7 @@
 import type { EChartsOption } from "echarts";
 import { computed } from "vue";
 import BaseChart from "@/charts/BaseChart.vue";
+import { truncateAxisLabel } from "@/utils/truncate";
 
 // ── Props ──────────────────────────────────────────────────────────
 
@@ -86,14 +87,14 @@ const chartOption = computed<EChartsOption | null>(() => {
     props.valueFormatter || props.rightValueFormatter
       ? (params: unknown): string => {
           const list = params as Array<{
-            axisValueLabel: string;
+            name: string;
             seriesName: string;
             value: number;
             color: string;
             seriesIndex: number;
           }>;
           if (!Array.isArray(list) || list.length === 0) return "";
-          const header = list[0].axisValueLabel ?? "";
+          const header = list[0].name ?? "";
           const lines = list.map((p) => {
             // Resolve yAxisIndex from series config (default 0)
             const idx = props.series[p.seriesIndex]?.yAxisIndex ?? 0;
@@ -152,9 +153,6 @@ const chartOption = computed<EChartsOption | null>(() => {
     legend: {
       show: showLegend.value,
       top: 0,
-      textStyle: {
-        fontSize: 12,
-      },
     },
     grid: {
       left: "3%",
@@ -169,6 +167,18 @@ const chartOption = computed<EChartsOption | null>(() => {
       boundaryGap: false,
       axisLabel: {
         fontSize: 11,
+        formatter: (value: string) => truncateAxisLabel(value),
+      },
+      axisPointer: {
+        label: {
+          show: true,
+          formatter: (params: { value: string | number | Date }) => {
+            const idx = Number(params.value);
+            return Number.isNaN(idx)
+              ? String(params.value)
+              : (props.xData[idx] ?? String(params.value));
+          },
+        },
       },
     },
     yAxis: yAxisConfig,

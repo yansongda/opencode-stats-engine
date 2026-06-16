@@ -11,10 +11,12 @@
     <main class="app-main">
       <slot />
     </main>
+    <AppFooter />
   </div>
 </template>
 
 <script setup lang="ts">
+import AppFooter from "@/components/AppFooter.vue";
 import AppNav from "@/components/AppNav.vue";
 import type { RealtimeMode } from "@/composables/useSSE";
 

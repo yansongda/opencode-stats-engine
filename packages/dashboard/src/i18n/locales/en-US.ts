@@ -45,6 +45,7 @@ const enUS = {
     avgProjectSubtitle: "Avg {count} messages / project",
     toolCalls: "Tool Calls",
     toolCallsSubtitle: "Errors {errors} · Success rate {rate}%",
+    successRate: "Success Rate",
     codeChanges: "Code Changes",
     changedFiles: "Changed Files",
     codeChangesSubtitle: "+{added} lines · -{deleted} lines",
@@ -113,6 +114,12 @@ const enUS = {
     colMessageCount: "Messages",
     colCost: "Cost",
     colAvgCost: "Avg Cost/Message",
+    colCacheRead: "Cache Read",
+    colCacheWrite: "Cache Write",
+    colReasoning: "Reasoning",
+    messageErrorRate: "Message Error Rate",
+    messageErrorRateTip:
+      "Based on message-level has_error flag; distinct from tool error rate",
     colErrorRate: "Error Rate",
     tokenBreakdown: "Token Breakdown",
     tokenBreakdownSubtitle: "Default shows top 20 models by cost",
@@ -142,7 +149,7 @@ const enUS = {
     colMainModel: "Primary Model",
     colLastActive: "Last Active",
     activityTrend: "Project Activity Trend",
-    activityTrendSubtitle: "Shows only top 6 projects by message count",
+    activityTrendSubtitle: "Shows only top 15 projects by message count",
     yLabelMessages: "Messages",
     modelDistribution: "Model Distribution",
     modelDistributionSubtitle:
@@ -150,6 +157,12 @@ const enUS = {
     sessionDistribution: "Session Distribution",
     yLabelSessions: "Sessions",
     messageDistribution: "Message Distribution",
+    modelTokenDistribution: "Model Token Distribution",
+    modelTokenDistributionSubtitle: "Top 15 projects by messages, top 6 models per project",
+    modelMessageDistribution: "Model Message Distribution",
+    modelMessageDistributionSubtitle: "Top 15 projects by messages, top 6 models per project",
+    modelSessionDistribution: "Model Session Distribution",
+    modelSessionDistributionSubtitle: "Top 15 projects by messages, top 6 models per project",
   },
 
   // ── Tools page ──────────────────────────────────────────────────────
@@ -300,6 +313,11 @@ const enUS = {
     friday: "Fri",
     saturday: "Sat",
     sunday: "Sun",
+    theme: "Theme",
+    language: "Language",
+    system: "System",
+    light: "Light",
+    dark: "Dark",
   },
 
   // ── Common / shared terms ───────────────────────────────────────────
@@ -324,6 +342,11 @@ const enUS = {
     active: "Active",
     deleted: "Deleted",
     dashPlaceholder: "—",
+    other: "Other",
+    // LiveStatus component
+    statusLive: "Live",
+    statusPolling: "Polling",
+    statusOffline: "Offline",
     // Time-related (timezone.ts)
     justNow: "Just now",
     minutesAgo: "{minutes}m ago",

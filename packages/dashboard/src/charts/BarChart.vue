@@ -12,6 +12,7 @@
 import type { EChartsOption } from "echarts";
 import { computed } from "vue";
 import BaseChart from "@/charts/BaseChart.vue";
+import { truncateAxisLabel } from "@/utils/truncate";
 
 // ── Props ──────────────────────────────────────────────────────────
 
@@ -76,12 +77,16 @@ const hasDualAxis = computed(() => !!props.rightYLabel && !props.horizontal);
 const chartOption = computed<EChartsOption | null>(() => {
   if (props.xData.length === 0 || props.series.length === 0) return null;
 
+  const categoryCount = props.xData.length;
+  const categoryRotation =
+    categoryCount <= 8 ? 0 : categoryCount <= 15 ? 45 : 60;
+
   const categoryAxis = {
     type: "category" as const,
     data: props.xData,
     axisLabel: {
       fontSize: 11,
-      rotate: props.xData.length > 8 ? 45 : 0,
+      rotate: categoryRotation,
     },
   };
 
@@ -99,13 +104,13 @@ const chartOption = computed<EChartsOption | null>(() => {
     const defaultTooltipFormatter = props.valueFormatter
       ? (params: unknown): string => {
           const list = params as Array<{
-            axisValueLabel: string;
+            name: string;
             seriesName: string;
             value: number;
             color: string;
           }>;
           if (!Array.isArray(list) || list.length === 0) return "";
-          const header = list[0].axisValueLabel ?? "";
+          const header = list[0].name ?? "";
           const lines = list.map(
             (p) =>
               `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color};margin-right:6px"></span>${p.seriesName}: <b>${props.valueFormatter?.(p.value) ?? p.value}</b>`,
@@ -126,7 +131,6 @@ const chartOption = computed<EChartsOption | null>(() => {
       legend: {
         show: props.showLegend && props.series.length > 1,
         top: 0,
-        textStyle: { fontSize: 12 },
       },
       grid: {
         left: "3%",
@@ -163,14 +167,14 @@ const chartOption = computed<EChartsOption | null>(() => {
     props.valueFormatter || props.rightValueFormatter
       ? (params: unknown): string => {
           const list = params as Array<{
-            axisValueLabel: string;
+            name: string;
             seriesName: string;
             value: number;
             color: string;
             seriesIndex: number;
           }>;
           if (!Array.isArray(list) || list.length === 0) return "";
-          const header = list[0].axisValueLabel ?? "";
+          const header = list[0].name ?? "";
           const lines = list.map((p) => {
             const idx = props.series[p.seriesIndex]?.yAxisIndex ?? 0;
             const fmt = formatterByAxis[idx];
@@ -229,7 +233,6 @@ const chartOption = computed<EChartsOption | null>(() => {
     legend: {
       show: props.showLegend && props.series.length > 1,
       top: 0,
-      textStyle: { fontSize: 12 },
     },
     grid: {
       left: "3%",
@@ -238,7 +241,24 @@ const chartOption = computed<EChartsOption | null>(() => {
       top: props.showLegend && props.series.length > 1 ? 40 : 20,
       containLabel: true,
     },
-    xAxis: categoryAxis,
+    xAxis: {
+      ...categoryAxis,
+      axisLabel: {
+        ...categoryAxis.axisLabel,
+        formatter: (value: string) => truncateAxisLabel(value),
+      },
+      axisPointer: {
+        label: {
+          show: true,
+          formatter: (params: { value: string | number | Date }) => {
+            const idx = Number(params.value);
+            return Number.isNaN(idx)
+              ? String(params.value)
+              : (props.xData[idx] ?? String(params.value));
+          },
+        },
+      },
+    },
     yAxis: yAxisConfig,
     series: props.series.map((s, idx) => ({
       name: s.name,

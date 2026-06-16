@@ -13,6 +13,11 @@ import type { EChartsOption } from "echarts";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import BaseChart from "@/charts/BaseChart.vue";
+import { useTheme } from "@/composables/useTheme";
+import {
+  CHART_TEXT_COLOR_DARK,
+  CHART_TEXT_COLOR_LIGHT,
+} from "@/utils/chartColors";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -52,12 +57,13 @@ const props = withDefaults(
     theme: undefined,
     loading: false,
     dayLabels: undefined,
-    minColor: "#ebedf0",
-    maxColor: "#40c463",
+    minColor: undefined,
+    maxColor: undefined,
   },
 );
 
 const { t } = useI18n();
+const { resolvedTheme } = useTheme();
 
 /** Day labels: use prop if provided, otherwise fall back to locale-aware defaults. */
 const effectiveDayLabels = computed(
@@ -95,6 +101,10 @@ const chartOption = computed<EChartsOption | null>(() => {
       heatData.push([hour, day, valueByCell.get(`${day}:${hour}`) ?? 0]);
     }
   }
+
+  const isDark = resolvedTheme.value === "dark";
+  const minColor = props.minColor ?? (isDark ? "#1e293b" : "#ebedf0");
+  const maxColor = props.maxColor ?? (isDark ? "#22c55e" : "#40c463");
 
   return {
     tooltip: {
@@ -140,10 +150,11 @@ const chartOption = computed<EChartsOption | null>(() => {
       right: "2%",
       top: "center",
       inRange: {
-        color: [props.minColor, props.maxColor],
+        color: [minColor, maxColor],
       },
       textStyle: {
         fontSize: 11,
+        color: isDark ? CHART_TEXT_COLOR_DARK : CHART_TEXT_COLOR_LIGHT,
       },
     },
     series: [

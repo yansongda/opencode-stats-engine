@@ -231,7 +231,8 @@ export function createProjectsDashboardHandler(db: Database) {
            m.project_path,
            m.model,
            COUNT(*)                     AS messages,
-           COUNT(DISTINCT m.session_id) AS sessions
+           COUNT(DISTINCT m.session_id) AS sessions,
+           SUM(m.total_tokens)          AS tokens
          FROM messages m
          WHERE m.model IS NOT NULL AND m.model != ''${msgWhere}
          GROUP BY m.project_path, m.model`,
@@ -244,6 +245,7 @@ export function createProjectsDashboardHandler(db: Database) {
         model: row.model as string,
         sessions: toNum(row.sessions),
         messages: toNum(row.messages),
+        tokens: toNum(row.tokens),
       }));
 
     // ── 7. Assemble response ────────────────────────────────────────

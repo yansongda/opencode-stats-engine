@@ -24,35 +24,29 @@
         {{ link.label }}
       </router-link>
     </div>
-    <div class="nav-badges">
-      <span class="audit-badge" :title="$t('nav.auditCompleteTitle')">{{ $t('nav.auditComplete') }}</span>
-      <span class="privacy-badge" :title="$t('nav.localPrivacyTitle')">{{ $t('nav.localPrivacy') }}</span>
-    </div>
-    <button
-      class="lang-toggle"
-      data-testid="lang-toggle"
-      :aria-label="$t('nav.langToggleLabel')"
-      @click="handleToggleLocale"
-    >
-      {{ currentLocale === 'zh-CN' ? 'EN' : 'ZH' }}
-    </button>
-    <div class="nav-status">
-      <div class="realtime-status" :class="realtimeClass" :data-testid="`realtime-${realtimeMode}`">
-        <span class="status-dot" :class="dotClass"></span>
-        <span class="status-label">{{ statusLabel }}</span>
+    <div class="nav-right">
+      <div class="nav-badges">
+        <span class="audit-badge" :title="$t('nav.auditCompleteTitle')">{{ $t('nav.auditComplete') }}</span>
+        <span class="privacy-badge" :title="$t('nav.localPrivacyTitle')">{{ $t('nav.localPrivacy') }}</span>
       </div>
-      <button
-        v-if="realtimeMode === 'disconnected'"
-        class="reconnect-btn"
-        data-testid="reconnect-btn"
-        @click="$emit('reconnect')"
-      >
-        {{ $t('nav.reconnect') }}
-      </button>
-      <span v-if="formattedUpdatedAt" class="data-updated-at" data-testid="data-updated-at">
-        {{ $t('nav.dataUpdatedAt', { time: formattedUpdatedAt }) }}
-        <span v-if="refreshing" class="refreshing-indicator">{{ $t('nav.refreshing') }}</span>
-      </span>
+      <div class="nav-controls">
+        <LanguageSwitcher />
+        <ThemeSwitcher />
+      </div>
+      <div class="nav-status">
+        <LiveStatus
+          :status="liveStatus"
+          :updated-at="updatedAtMs"
+        />
+        <button
+          v-if="realtimeMode === 'disconnected'"
+          class="reconnect-btn"
+          data-testid="reconnect-btn"
+          @click="$emit('reconnect')"
+        >
+          {{ $t('nav.reconnect') }}
+        </button>
+      </div>
     </div>
   </nav>
 </template>
@@ -60,11 +54,10 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
+import LiveStatus from "@/components/LiveStatus.vue";
+import ThemeSwitcher from "@/components/ThemeSwitcher.vue";
 import type { RealtimeMode } from "@/composables/useSSE";
-import i18n from "@/i18n";
-import type { SupportedLocale } from "@/i18n/composables/useLocale";
-import { setLocale } from "@/i18n/composables/useLocale";
-import { formatTimestamp } from "@/utils/timezone";
 
 const { t } = useI18n();
 
@@ -91,43 +84,18 @@ const links = computed(() => [
   { to: "/sessions", label: t("nav.sessions"), testId: "sessions" },
 ]);
 
-const currentLocale = computed(
-  () => i18n.global.locale.value as SupportedLocale,
-);
-
-function handleToggleLocale(): void {
-  const next: SupportedLocale =
-    currentLocale.value === "zh-CN" ? "en-US" : "zh-CN";
-  setLocale(i18n, next);
-}
-
-const realtimeClass = computed(() => `realtime-${props.realtimeMode}`);
-const dotClass = computed(() => {
+const liveStatus = computed<"live" | "polling" | "offline">(() => {
   switch (props.realtimeMode) {
     case "sse":
-      return "dot-live";
+      return "live";
     case "polling":
-      return "dot-polling";
+      return "polling";
     case "disconnected":
-      return "dot-offline";
-  }
-});
-const statusLabel = computed(() => {
-  switch (props.realtimeMode) {
-    case "sse":
-      return t("nav.statusLive");
-    case "polling":
-      return t("nav.statusPolling");
-    case "disconnected":
-      return t("nav.statusOffline");
+      return "offline";
   }
 });
 
-const formattedUpdatedAt = computed<string | null>(() => {
-  const d = props.lastDataUpdatedAt;
-  if (!d) return null;
-  return formatTimestamp(d.getTime(), { withSeconds: true });
-});
+const updatedAtMs = computed(() => props.lastDataUpdatedAt?.getTime());
 </script>
 
 <style scoped>
@@ -157,11 +125,17 @@ const formattedUpdatedAt = computed<string | null>(() => {
   color: var(--text);
 }
 
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  margin-left: auto;
+}
+
 .nav-badges {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  margin-left: auto;
 }
 
 .nav-hamburger {
@@ -174,11 +148,10 @@ const formattedUpdatedAt = computed<string | null>(() => {
   color: var(--text);
   font-size: var(--text-lg);
   line-height: 1;
-  margin-left: auto;
 }
 
 .nav-hamburger:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--surface-hover);
 }
 
 .nav-links {
@@ -197,12 +170,12 @@ const formattedUpdatedAt = computed<string | null>(() => {
 
 .nav-link:hover {
   color: var(--text);
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--surface-hover);
 }
 
 .nav-link.router-link-active {
   color: var(--primary);
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: var(--primary-subtle);
 }
 
 .nav-status {
@@ -211,74 +184,10 @@ const formattedUpdatedAt = computed<string | null>(() => {
   gap: var(--spacing-2);
 }
 
-.realtime-status {
+.nav-controls {
   display: flex;
   align-items: center;
-  gap: var(--spacing-1);
-  padding: 2px 8px;
-  border-radius: var(--radius-md);
-  background-color: rgba(0, 0, 0, 0.03);
-  border: 1px solid var(--border);
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.dot-live {
-  background-color: var(--success);
-  box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
-  animation: pulse-live 2s ease-in-out infinite;
-}
-
-.dot-polling {
-  background-color: var(--warning);
-  box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
-  animation: pulse-polling 3s ease-in-out infinite;
-}
-
-.dot-offline {
-  background-color: var(--danger);
-  box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
-}
-
-.status-label {
-  font-size: var(--text-xs);
-  font-weight: 500;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.realtime-live .status-label {
-  color: var(--success);
-}
-
-.realtime-polling .status-label {
-  color: var(--warning);
-}
-
-.realtime-disconnected .status-label {
-  color: var(--danger);
-}
-
-.data-updated-at {
-  font-size: var(--text-xs);
-  color: var(--text-muted);
-  white-space: nowrap;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  background-color: rgba(0, 0, 0, 0.03);
-  border: 1px solid var(--border);
-}
-
-.refreshing-indicator {
-  color: var(--warning);
-  font-weight: 500;
-  margin-left: var(--spacing-1);
+  gap: var(--spacing-3);
 }
 
 .reconnect-btn {
@@ -317,25 +226,6 @@ const formattedUpdatedAt = computed<string | null>(() => {
   background-color: var(--primary);
 }
 
-.lang-toggle {
-  padding: 2px 8px;
-  border-radius: var(--radius-md);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--primary);
-  background: transparent;
-  border: 1px solid var(--primary);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-  letter-spacing: 0.02em;
-}
-
-.lang-toggle:hover {
-  background-color: var(--primary);
-  color: white;
-}
-
 /* ── Mobile: hamburger menu ───────────────────────────────────────── */
 
 @media (max-width: 767px) {
@@ -357,15 +247,14 @@ const formattedUpdatedAt = computed<string | null>(() => {
     flex-direction: column;
     gap: var(--spacing-1);
     z-index: 10;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
   }
 
   .nav-links.open {
     display: flex;
   }
 
-  .nav-badges,
-  .lang-toggle {
+  .nav-badges {
     display: none;
   }
 
@@ -374,13 +263,4 @@ const formattedUpdatedAt = computed<string | null>(() => {
   }
 }
 
-@keyframes pulse-live {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-@keyframes pulse-polling {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
 </style>

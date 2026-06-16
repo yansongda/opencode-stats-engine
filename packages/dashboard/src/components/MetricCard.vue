@@ -17,7 +17,7 @@
       <span class="trend-arrow">{{ trendArrow }}</span>
       <span class="trend-text">{{ trend }}</span>
     </div>
-    <div v-if="subtitle" class="metric-subtitle">{{ subtitle }}</div>
+    <div v-if="subtitle && !hideSubtitle" class="metric-subtitle">{{ subtitle }}</div>
   </div>
 </template>
 
@@ -32,6 +32,7 @@ const props = defineProps<{
   trend?: string;
   trendDirection?: "up" | "down" | "neutral";
   subtitle?: string;
+  hideSubtitle?: boolean;
   testId?: string;
 }>();
 
@@ -146,17 +147,17 @@ const trendArrow = computed(() => {
 
 .trend-up {
   color: var(--success);
-  background-color: rgba(34, 197, 94, 0.1);
+  background-color: var(--success-subtle);
 }
 
 .trend-down {
   color: var(--danger);
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: var(--danger-subtle);
 }
 
 .trend-neutral {
   color: var(--text-muted);
-  background-color: rgba(148, 163, 184, 0.1);
+  background-color: var(--text-muted-subtle);
 }
 
 .trend-arrow {

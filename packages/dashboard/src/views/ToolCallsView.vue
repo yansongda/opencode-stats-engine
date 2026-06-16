@@ -189,7 +189,9 @@ import PieChart from "@/charts/PieChart.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import LoadingState from "@/components/LoadingState.vue";
 import TimeRangePicker from "@/components/TimeRangePicker.vue";
+import { useTheme } from "@/composables/useTheme";
 import { useToolsStore } from "@/stores/tools";
+import { getChartColors } from "@/utils/chartColors";
 import { formatNumber } from "@/utils/format";
 import {
   formatBucketLocal,
@@ -202,6 +204,10 @@ import {
 
 const store = useToolsStore();
 const { t } = useI18n();
+
+// ── Theme-aware chart colors ───────────────────────────────────────
+const { resolvedTheme } = useTheme();
+const chartColors = computed(() => getChartColors(resolvedTheme.value));
 
 const selectedPeriod = ref<TimeRange>("7d");
 
@@ -313,12 +319,12 @@ const trendSeries = computed(() => {
     {
       name: t("tools.seriesToolCalls"),
       data: labels.map((d) => callMap.get(d) ?? 0),
-      color: "#3b82f6",
+      color: chartColors.value[0],
     },
     {
       name: t("tools.seriesFailedCalls"),
       data: labels.map((d) => failMap.get(d) ?? 0),
-      color: "#ef4444",
+      color: chartColors.value[1],
     },
   ];
 });
@@ -378,7 +384,7 @@ const durationSeries = computed(() => [
   {
     name: t("tools.seriesToolCount"),
     data: durationHistData.value.map((b) => b.count),
-    color: "#8b5cf6",
+    color: chartColors.value[0],
   },
 ]);
 

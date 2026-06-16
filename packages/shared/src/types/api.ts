@@ -120,6 +120,8 @@ export interface DashboardModelItem {
   input_tokens: number;
   output_tokens: number;
   reasoning_tokens: number;
+  cache_read: number;
+  cache_write: number;
   total_tokens: number;
   cost_usd: number;
   avg_cost_per_message: number | null;
@@ -161,6 +163,7 @@ export interface DashboardProjectModelUsageItem {
   model: string;
   sessions: number;
   messages: number;
+  tokens: number;
 }
 
 export interface DashboardProjectsData {

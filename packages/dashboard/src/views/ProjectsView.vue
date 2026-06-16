@@ -107,6 +107,7 @@
           height="280px"
           :y-label="$t('projects.yLabelMessages')"
           :value-formatter="formatNumber"
+          :tooltip-formatter="trendTooltipFormatter"
           :smooth="true"
           :show-area="true"
           :show-legend="true"
@@ -114,14 +115,15 @@
       </div>
     </div>
 
-    <div class="chart-card" data-testid="model-distribution">
+    <!-- Model Token Distribution -->
+    <div class="chart-card" data-testid="model-token-distribution">
       <div class="chart-card-header">
-        <h3 class="chart-card-title">{{ $t('projects.modelDistribution') }}</h3>
-        <span class="chart-card-subtitle">{{ $t('projects.modelDistributionSubtitle') }}</span>
+        <h3 class="chart-card-title">{{ $t('projects.modelTokenDistribution') }}</h3>
+        <span class="chart-card-subtitle">{{ $t('projects.modelTokenDistributionSubtitle') }}</span>
       </div>
-      <div class="shared-legend" v-if="topModels.length > 1">
+      <div class="shared-legend" v-if="legendModels.length > 1">
         <button
-          v-for="model in topModels"
+          v-for="model in legendModels"
           :key="model.name"
           type="button"
           class="legend-item"
@@ -132,32 +134,50 @@
           <span class="legend-label">{{ model.name }}</span>
         </button>
       </div>
-      <div class="distribution-panes">
-        <div class="chart-pane">
-          <h4 class="chart-pane-title">{{ $t('projects.sessionDistribution') }}</h4>
-          <BarChart
-            :x-data="modelProjectNames"
-            :series="sessionSeries"
-            :loading="store.loading.value"
-            height="280px"
-            :stacked="true"
-            :y-label="$t('projects.yLabelSessions')"
-            :show-legend="false"
-          />
-        </div>
-        <div class="chart-pane">
-          <h4 class="chart-pane-title">{{ $t('projects.messageDistribution') }}</h4>
-          <BarChart
-            :x-data="modelProjectNames"
-            :series="messageSeries"
-            :loading="store.loading.value"
-            height="280px"
-            :stacked="true"
-            :y-label="$t('projects.yLabelMessages')"
-            :show-legend="false"
-          />
-        </div>
+      <BarChart
+        :x-data="modelProjectNames"
+        :series="tokenSeries"
+        :loading="store.loading.value"
+        height="280px"
+        :stacked="true"
+        :y-label="'Token'"
+        :value-formatter="formatTokens"
+        :show-legend="false"
+      />
+    </div>
+
+    <!-- Model Message Distribution -->
+    <div class="chart-card" data-testid="model-message-distribution">
+      <div class="chart-card-header">
+        <h3 class="chart-card-title">{{ $t('projects.modelMessageDistribution') }}</h3>
+        <span class="chart-card-subtitle">{{ $t('projects.modelMessageDistributionSubtitle') }}</span>
       </div>
+      <BarChart
+        :x-data="modelProjectNames"
+        :series="messageSeries"
+        :loading="store.loading.value"
+        height="280px"
+        :stacked="true"
+        :y-label="$t('projects.yLabelMessages')"
+        :show-legend="false"
+      />
+    </div>
+
+    <!-- Model Session Distribution -->
+    <div class="chart-card" data-testid="model-session-distribution">
+      <div class="chart-card-header">
+        <h3 class="chart-card-title">{{ $t('projects.modelSessionDistribution') }}</h3>
+        <span class="chart-card-subtitle">{{ $t('projects.modelSessionDistributionSubtitle') }}</span>
+      </div>
+      <BarChart
+        :x-data="modelProjectNames"
+        :series="sessionSeries"
+        :loading="store.loading.value"
+        height="280px"
+        :stacked="true"
+        :y-label="$t('projects.yLabelSessions')"
+        :show-legend="false"
+      />
     </div>
     </template>
   </div>
@@ -171,7 +191,9 @@ import LineChart from "@/charts/LineChart.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import LoadingState from "@/components/LoadingState.vue";
 import TimeRangePicker from "@/components/TimeRangePicker.vue";
+import { useTheme } from "@/composables/useTheme";
 import { useProjectsStore } from "@/stores/projects";
+import { getChartColors } from "@/utils/chartColors";
 import { formatCost, formatNumber, formatTokens } from "@/utils/format";
 import {
   formatBucketLocal,
@@ -276,7 +298,10 @@ const trendDates = computed(() => {
 
 const trendDateLabels = computed(() => trendDates.value.map(formatBucketLocal));
 
-const MAX_TREND_PROJECTS = 6;
+const MAX_TREND_PROJECTS = 15;
+
+/** Map from truncated path to full path for tooltip display. */
+const trendPathMap = new Map<string, string>();
 
 const trendSeries = computed(() => {
   const usage = store.activityTrend.value;
@@ -304,29 +329,45 @@ const trendSeries = computed(() => {
     lookup.get(point.project_path)?.set(point.date, point.messages);
   }
 
-  return topProjects.map((projectPath, idx) => ({
-    name: truncatePath(projectPath),
-    data: trendDates.value.map(
-      (date) => lookup.get(projectPath)?.get(date) ?? 0,
-    ),
-    color: CHART_COLORS[idx % CHART_COLORS.length],
-  }));
+  // Clear and rebuild the path map
+  trendPathMap.clear();
+
+  return topProjects.map((projectPath, idx) => {
+    const truncated = truncatePath(projectPath);
+    trendPathMap.set(truncated, projectPath);
+    return {
+      name: truncated,
+      data: trendDates.value.map(
+        (date) => lookup.get(projectPath)?.get(date) ?? 0,
+      ),
+      color: chartColors.value[idx % chartColors.value.length],
+    };
+  });
 });
+
+/** Tooltip formatter that shows full project path. */
+function trendTooltipFormatter(params: unknown): string {
+  const list = params as Array<{
+    name: string;
+    seriesName: string;
+    value: number;
+    color: string;
+  }>;
+  if (!Array.isArray(list) || list.length === 0) return "";
+  const header = list[0].name ?? "";
+  const lines = list.map((p) => {
+    const fullPath = trendPathMap.get(p.seriesName) ?? p.seriesName;
+    return `<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:${p.color};"></span>${fullPath}: <b>${formatNumber(p.value)}</b>`;
+  });
+  return `<div style="font-size:13px;line-height:1.6">${header}<br/>${lines.join("<br/>")}</div>`;
+}
 
 // ── Model Distribution Chart Data (from project_model_usage) ──────
 
-const CHART_COLORS = [
-  "#3b82f6",
-  "#22c55e",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#06b6d4",
-  "#f97316",
-  "#ec4899",
-];
-const MAX_MODEL_PROJECTS = 8;
-const MAX_MODEL_MODELS = 5;
+const { resolvedTheme } = useTheme();
+const chartColors = computed(() => getChartColors(resolvedTheme.value));
+const MAX_MODEL_PROJECTS = 15;
+const MAX_MODEL_MODELS = 6;
 
 /** Top N projects ranked by total messages (shared across both panes). */
 const rankedProjects = computed(() => {
@@ -361,14 +402,12 @@ const rankedModels = computed(() => {
 const topModels = computed(() =>
   rankedModels.value.map((name, idx) => ({
     name,
-    color: CHART_COLORS[idx % CHART_COLORS.length],
+    color: chartColors.value[idx % chartColors.value.length],
   })),
 );
 
-/** Truncated project names for x-axis. */
-const modelProjectNames = computed(() =>
-  rankedProjects.value.map(truncatePath),
-);
+/** Full project names for x-axis (chart component owns truncation). */
+const modelProjectNames = computed(() => rankedProjects.value);
 
 /** Hidden models toggle (replaced as new Set for Vue reactivity). */
 const hiddenModels = ref<Set<string>>(new Set());
@@ -388,30 +427,70 @@ type ModelUsageItem = {
   model: string;
   sessions: number;
   messages: number;
+  tokens: number;
 };
 
-/** Build a series array from a value accessor, zeroing hidden models. */
+/** Color reserved for the "其他" (other) aggregate series. */
+const OTHER_COLOR = "#a0a0a0";
+
+/** Models shown in the shared legend: top 6 + "其他". */
+const legendModels = computed(() => [
+  ...topModels.value,
+  { name: t("common.other"), color: OTHER_COLOR },
+]);
+
+/** Build a series array from a value accessor, zeroing hidden models. Includes "其他" aggregation. */
 function buildSeries(
   getValue: (item: ModelUsageItem) => number,
 ): Array<{ name: string; data: number[]; color: string }> {
   const usage = store.projectModelUsage.value;
   if (usage.length === 0) return [];
   const projects = rankedProjects.value;
+  const ranked = rankedModels.value;
   const hidden = hiddenModels.value;
+  const otherName = t("common.other");
 
-  return topModels.value.map((model) => ({
+  // Index usage by project+model for O(1) lookup
+  const index = new Map<string, ModelUsageItem>();
+  for (const item of usage) {
+    index.set(`${item.project_path}\0${item.model}`, item);
+  }
+
+  // Top-model series
+  const series = topModels.value.map((model) => ({
     name: model.name,
     data: hidden.has(model.name)
       ? projects.map(() => 0)
-      : projects.map((projectPath) => {
-          const item = usage.find(
-            (u) => u.project_path === projectPath && u.model === model.name,
-          );
+      : projects.map((p) => {
+          const item = index.get(`${p}\0${model.name}`);
           return item ? getValue(item) : 0;
         }),
     color: model.color,
   }));
+
+  // "其他" — sum of models NOT in top 6
+  const otherData = hidden.has(otherName)
+    ? projects.map(() => 0)
+    : projects.map((projectPath) => {
+        let sum = 0;
+        for (const item of usage) {
+          if (
+            item.project_path === projectPath &&
+            !ranked.includes(item.model)
+          ) {
+            sum += getValue(item);
+          }
+        }
+        return sum;
+      });
+
+  series.push({ name: otherName, data: otherData, color: OTHER_COLOR });
+
+  return series;
 }
+
+/** Token-count series for token distribution. */
+const tokenSeries = computed(() => buildSeries((item) => item.tokens));
 
 /** Session-count series for session distribution. */
 const sessionSeries = computed(() => buildSeries((item) => item.sessions));
@@ -520,7 +599,7 @@ function formatLastActive(ts: number | null): string {
 }
 
 .data-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-hover);
 }
 
 .col-project {
@@ -557,7 +636,7 @@ function formatLastActive(ts: number | null): string {
   font-size: var(--text-xs);
   font-weight: 500;
   color: var(--primary);
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--primary-subtle);
 }
 
 .col-date {
@@ -585,11 +664,6 @@ function formatLastActive(ts: number | null): string {
   gap: var(--spacing-3);
 }
 
-.charts-row-split {
-  /* Grid handled by .resp-two-col utility */
-  gap: var(--spacing-3);
-}
-
 .chart-card {
   flex: 1;
   min-width: 0;
@@ -600,19 +674,6 @@ function formatLastActive(ts: number | null): string {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
-}
-
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.chart-title,
-.section-title {
-  font-size: var(--text-lg);
-  font-weight: 600;
-  color: var(--text);
 }
 
 .chart-card-header {
@@ -630,26 +691,6 @@ function formatLastActive(ts: number | null): string {
 .chart-card-subtitle {
   font-size: var(--text-xs);
   color: var(--text-muted);
-}
-
-.distribution-panes {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-4);
-}
-
-.chart-pane {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-  min-width: 0;
-}
-
-.chart-pane-title {
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--text-muted);
-  text-align: center;
 }
 
 /* ── Shared Legend ─────────────────────────────────────────────────── */
@@ -690,12 +731,6 @@ function formatLastActive(ts: number | null): string {
 .legend-label {
   font-size: var(--text-xs);
   color: var(--text-muted);
-}
-
-@media (max-width: 767px) {
-  .distribution-panes {
-    grid-template-columns: 1fr;
-  }
 }
 
 </style>

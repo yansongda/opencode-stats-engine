@@ -60,8 +60,8 @@
         :data="heatmapData"
         :day-labels="dayLabels"
         height="280px"
-        min-color="#eff6ff"
-        max-color="#3b82f6"
+        :min-color="resolvedTheme === 'dark' ? HEATMAP_COLORS_DARK[0] : HEATMAP_COLORS_LIGHT[0]"
+        :max-color="resolvedTheme === 'dark' ? HEATMAP_COLORS_DARK[1] : HEATMAP_COLORS_LIGHT[1]"
       />
     </div>
 
@@ -113,7 +113,9 @@ import EmptyState from "@/components/EmptyState.vue";
 import LoadingState from "@/components/LoadingState.vue";
 import MetricCard from "@/components/MetricCard.vue";
 import TimeRangePicker from "@/components/TimeRangePicker.vue";
+import { useTheme } from "@/composables/useTheme";
 import { useEfficiencyStore } from "@/stores/efficiency";
+import { getChartColors, HEATMAP_COLORS_LIGHT, HEATMAP_COLORS_DARK } from "@/utils/chartColors";
 import { formatCost, formatTokens } from "@/utils/format";
 import {
   formatBucketLocal,
@@ -126,6 +128,10 @@ const { efficiencyData, loading, error, lastFetchedAt, fetchEfficiency } =
   useEfficiencyStore();
 
 const { t } = useI18n();
+
+// ── Theme-aware chart colors ───────────────────────────────────────
+const { resolvedTheme } = useTheme();
+const chartColors = computed(() => getChartColors(resolvedTheme.value));
 
 // ── State ──────────────────────────────────────────────────────────
 
@@ -243,14 +249,14 @@ const timelineTokenSeries = computed(() => {
     {
       name: "Token",
       data: efficiencyData.value.timeline.map((p) => p.tokens),
-      color: "#3b82f6",
+      color: chartColors.value[0],
     },
     {
       name: t("efficiency.seriesCost"),
       data: efficiencyData.value.timeline.map((p) =>
         Number((p.cost_usd ?? 0).toFixed(4)),
       ),
-      color: "#f59e0b",
+      color: chartColors.value[1],
       yAxisIndex: 1,
     },
   ];
@@ -281,18 +287,17 @@ const codeChangesSeries = computed(() => {
     {
       name: t("efficiency.seriesLinesAdded"),
       data: efficiencyData.value.timeline.map((p) => p.lines_added),
-      color: "#16a34a",
+      color: chartColors.value[0],
     },
     {
       name: t("efficiency.seriesLinesDeleted"),
       data: efficiencyData.value.timeline.map((p) => p.lines_deleted),
-      color: "#ef4444",
+      color: chartColors.value[1],
     },
     {
       name: t("efficiency.seriesFilesChanged"),
       data: efficiencyData.value.timeline.map((p) => p.files_changed),
-      color: "#3b82f6",
-      yAxisIndex: 1,
+      color: chartColors.value[2],
     },
   ];
 });

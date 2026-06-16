@@ -63,7 +63,9 @@
                 <MetricCard
                     :label="$t('overview.toolCalls')"
                     :value="overview?.total_tool_calls ?? 0"
-                    :subtitle="$t('overview.toolCallsSubtitle', { errors: overview?.total_tool_errors ?? 0, rate: toolSuccessRate })"
+                    :secondary-label="$t('overview.successRate')"
+                    :secondary-value="`${toolSuccessRate}%`"
+                    hide-subtitle
                     test-id="metric-tools"
                 />
                 <MetricCard
@@ -107,8 +109,8 @@
                     :data="heatmapData"
                     :day-labels="dayLabels"
                     height="280px"
-                    min-color="#eff6ff"
-                    max-color="#3b82f6"
+                    :min-color="resolvedTheme === 'dark' ? HEATMAP_COLORS_DARK[0] : HEATMAP_COLORS_LIGHT[0]"
+                    :max-color="resolvedTheme === 'dark' ? HEATMAP_COLORS_DARK[1] : HEATMAP_COLORS_LIGHT[1]"
                 />
             </div>
 
@@ -270,7 +272,13 @@ import EmptyState from "@/components/EmptyState.vue";
 import LoadingState from "@/components/LoadingState.vue";
 import MetricCard from "@/components/MetricCard.vue";
 import TimeRangePicker from "@/components/TimeRangePicker.vue";
+import { useTheme } from "@/composables/useTheme";
 import { useOverviewStore } from "@/stores/overview";
+import {
+  getChartColors,
+  HEATMAP_COLORS_DARK,
+  HEATMAP_COLORS_LIGHT,
+} from "@/utils/chartColors";
 import { formatCost, formatNumber, formatTokens } from "@/utils/format";
 import {
   formatBucketLocal,
@@ -278,20 +286,10 @@ import {
   type TimeRange,
 } from "@/utils/timezone";
 
-// ── ECharts default palette (matches PieChart.vue) ─────────────────
+// ── Theme-aware colors ─────────────────────────────────────────────
 
-const ECHARTS_COLORS = [
-  "#5470c6",
-  "#91cc75",
-  "#fac858",
-  "#ee6666",
-  "#73c0de",
-  "#3ba272",
-  "#fc8452",
-  "#9a60b4",
-  "#ea7ccc",
-  "#8884d8",
-];
+const { resolvedTheme } = useTheme();
+const chartColors = computed(() => getChartColors(resolvedTheme.value));
 
 // ── Store & i18n ───────────────────────────────────────────────────
 
@@ -382,13 +380,13 @@ const trendSeries = computed(() => [
   {
     name: "Token",
     data: trendData.value.map((d) => d.tokens),
-    color: "#3b82f6",
+    color: chartColors.value[0],
     yAxisIndex: 0,
   },
   {
     name: t("overview.seriesMessages"),
     data: trendData.value.map((d) => d.messages),
-    color: "#16a34a",
+    color: chartColors.value[1],
     yAxisIndex: 1,
   },
 ]);
@@ -444,7 +442,7 @@ const modelLegendItems = computed(() => {
       seen.add(d.name);
       items.push({
         name: d.name,
-        color: ECHARTS_COLORS[items.length % ECHARTS_COLORS.length],
+        color: chartColors.value[items.length % chartColors.value.length],
       });
     }
   }
@@ -454,7 +452,7 @@ const modelLegendItems = computed(() => {
       seen.add(d.name);
       items.push({
         name: d.name,
-        color: ECHARTS_COLORS[items.length % ECHARTS_COLORS.length],
+        color: chartColors.value[items.length % chartColors.value.length],
       });
     }
   }
@@ -536,7 +534,7 @@ const projectLegendItems = computed(() => {
       seen.add(d.name);
       items.push({
         name: d.name,
-        color: ECHARTS_COLORS[items.length % ECHARTS_COLORS.length],
+        color: chartColors.value[items.length % chartColors.value.length],
       });
     }
   }
@@ -545,7 +543,7 @@ const projectLegendItems = computed(() => {
       seen.add(d.name);
       items.push({
         name: d.name,
-        color: ECHARTS_COLORS[items.length % ECHARTS_COLORS.length],
+        color: chartColors.value[items.length % chartColors.value.length],
       });
     }
   }

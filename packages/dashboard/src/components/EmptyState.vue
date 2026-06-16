@@ -115,6 +115,6 @@ const variantClass = computed(() => `variant-${props.variant}`);
 }
 
 .variant-error .empty-action:hover {
-  background-color: #b91c1c;
+  background-color: var(--danger-hover);
 }
 </style>

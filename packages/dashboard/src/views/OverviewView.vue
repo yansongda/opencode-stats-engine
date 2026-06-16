@@ -65,7 +65,7 @@
                     :value="overview?.total_tool_calls ?? 0"
                     :secondary-label="$t('overview.successRate')"
                     :secondary-value="`${toolSuccessRate}%`"
-                    hide-subtitle
+                    :subtitle="$t('overview.toolCallsSubtitle', { errors: overview?.total_tool_errors ?? 0 })"
                     test-id="metric-tools"
                 />
                 <MetricCard

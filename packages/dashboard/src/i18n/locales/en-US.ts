@@ -44,7 +44,7 @@ const enUS = {
     avgProjectTokens: "Avg Project Tokens",
     avgProjectSubtitle: "Avg {count} messages / project",
     toolCalls: "Tool Calls",
-    toolCallsSubtitle: "Errors {errors} · Success rate {rate}%",
+    toolCallsSubtitle: "{errors} failures",
     successRate: "Success Rate",
     codeChanges: "Code Changes",
     changedFiles: "Changed Files",

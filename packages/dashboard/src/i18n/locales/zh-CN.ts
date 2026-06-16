@@ -44,7 +44,7 @@ const zhCN = {
     avgProjectTokens: "平均项目 Token",
     avgProjectSubtitle: "平均 {count} 消息 / 项目",
     toolCalls: "工具调用",
-    toolCallsSubtitle: "错误 {errors} · 成功率 {rate}%",
+    toolCallsSubtitle: "{errors} 次失败",
     successRate: "成功率",
     codeChanges: "变更代码",
     changedFiles: "变更文件",

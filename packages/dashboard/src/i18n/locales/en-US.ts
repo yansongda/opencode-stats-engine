@@ -117,6 +117,9 @@ const enUS = {
     colCacheRead: "Cache Read",
     colCacheWrite: "Cache Write",
     colReasoning: "Reasoning",
+    colTotalToken: "Total Token",
+    colInputToken: "Input",
+    colOutputToken: "Output",
     messageErrorRate: "Message Error Rate",
     messageErrorRateTip:
       "Based on message-level has_error flag; distinct from tool error rate",

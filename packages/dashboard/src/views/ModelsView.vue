@@ -36,8 +36,14 @@
             <th class="col-sortable col-right" @click="toggleSort('message_count')">
               {{ $t('models.colMessageCount') }} <span class="sort-arrow">{{ sortIndicator('message_count') }}</span>
             </th>
-            <th class="col-sortable col-right" @click="toggleSort('total_tokens')">
-              Token <span class="sort-arrow">{{ sortIndicator('total_tokens') }}</span>
+            <th class="col-sortable col-right col-token-start" @click="toggleSort('total_tokens')">
+              {{ $t('models.colTotalToken') }} <span class="sort-arrow">{{ sortIndicator('total_tokens') }}</span>
+            </th>
+            <th class="col-sortable col-right" @click="toggleSort('input_tokens')">
+              {{ $t('models.colInputToken') }} <span class="sort-arrow">{{ sortIndicator('input_tokens') }}</span>
+            </th>
+            <th class="col-sortable col-right" @click="toggleSort('output_tokens')">
+              {{ $t('models.colOutputToken') }} <span class="sort-arrow">{{ sortIndicator('output_tokens') }}</span>
             </th>
             <th class="col-sortable col-right" @click="toggleSort('cache_read')">
               {{ $t('models.colCacheRead') }} <span class="sort-arrow">{{ sortIndicator('cache_read') }}</span>
@@ -45,7 +51,7 @@
             <th class="col-sortable col-right" @click="toggleSort('cache_write')">
               {{ $t('models.colCacheWrite') }} <span class="sort-arrow">{{ sortIndicator('cache_write') }}</span>
             </th>
-            <th class="col-sortable col-right" @click="toggleSort('reasoning_tokens')">
+            <th class="col-sortable col-right col-token-end" @click="toggleSort('reasoning_tokens')">
               {{ $t('models.colReasoning') }} <span class="sort-arrow">{{ sortIndicator('reasoning_tokens') }}</span>
             </th>
             <th class="col-sortable col-right" @click="toggleSort('cost_usd')">
@@ -61,16 +67,18 @@
         </thead>
         <tbody>
           <tr v-if="sortedModels.length === 0">
-            <td colspan="10" class="empty-row">{{ $t('models.noData') }}</td>
+            <td colspan="12" class="empty-row">{{ $t('models.noData') }}</td>
           </tr>
           <tr v-for="m in sortedModels" :key="m.model" :data-testid="`model-row-${m.model}`">
             <td class="col-monospace">{{ m.model }}</td>
             <td class="col-right">{{ formatNumber(m.session_count) }}</td>
             <td class="col-right">{{ formatNumber(m.message_count) }}</td>
-            <td class="col-right">{{ formatTokens(m.total_tokens) }}</td>
+            <td class="col-right col-token-start">{{ formatTokens(m.total_tokens) }}</td>
+            <td class="col-right">{{ formatTokens(m.input_tokens) }}</td>
+            <td class="col-right">{{ formatTokens(m.output_tokens) }}</td>
             <td class="col-right">{{ formatTokens(m.cache_read) }}</td>
             <td class="col-right">{{ formatTokens(m.cache_write) }}</td>
-            <td class="col-right">{{ formatTokens(m.reasoning_tokens) }}</td>
+            <td class="col-right col-token-end">{{ formatTokens(m.reasoning_tokens) }}</td>
             <td class="col-right">{{ formatCost(m.cost_usd) }}</td>
             <td class="col-right">{{ formatCost(m.avg_cost_per_message ?? 0) }}</td>
             <td class="col-right">
@@ -432,6 +440,15 @@ function errorRateClass(m: DashboardModelItem): string {
 .col-monospace {
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
   font-size: var(--text-sm);
+}
+
+/* ── Token Group Visual ─────────────────────────────────────────────── */
+.col-token-start {
+  border-left: 2px solid var(--primary);
+}
+
+.col-token-end {
+  border-right: 2px solid var(--primary);
 }
 
 .empty-row {

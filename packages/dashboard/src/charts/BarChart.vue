@@ -193,6 +193,7 @@ const chartOption = computed<EChartsOption | null>(() => {
         {
           type: "value" as const,
           name: props.yLabel || undefined,
+          alignTicks: false,
           axisLabel: {
             fontSize: 11,
             ...(props.valueFormatter
@@ -204,6 +205,8 @@ const chartOption = computed<EChartsOption | null>(() => {
           type: "value" as const,
           position: "right" as const,
           name: props.rightYLabel || undefined,
+          alignTicks: false,
+          splitLine: { show: false },
           axisLabel: {
             fontSize: 11,
             ...(props.rightValueFormatter
@@ -215,6 +218,7 @@ const chartOption = computed<EChartsOption | null>(() => {
     : {
         type: "value" as const,
         name: props.yLabel || undefined,
+        alignTicks: false,
         axisLabel: {
           fontSize: 11,
           ...(props.valueFormatter ? { formatter: props.valueFormatter } : {}),

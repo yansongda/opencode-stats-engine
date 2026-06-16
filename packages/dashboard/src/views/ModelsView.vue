@@ -68,9 +68,9 @@
             <td class="col-right">{{ formatNumber(m.session_count) }}</td>
             <td class="col-right">{{ formatNumber(m.message_count) }}</td>
             <td class="col-right">{{ formatTokens(m.total_tokens) }}</td>
-            <td class="col-right">{{ formatNumber(m.cache_read) }}</td>
-            <td class="col-right">{{ formatNumber(m.cache_write) }}</td>
-            <td class="col-right">{{ formatNumber(m.reasoning_tokens) }}</td>
+            <td class="col-right">{{ formatTokens(m.cache_read) }}</td>
+            <td class="col-right">{{ formatTokens(m.cache_write) }}</td>
+            <td class="col-right">{{ formatTokens(m.reasoning_tokens) }}</td>
             <td class="col-right">{{ formatCost(m.cost_usd) }}</td>
             <td class="col-right">{{ formatCost(m.avg_cost_per_message ?? 0) }}</td>
             <td class="col-right">

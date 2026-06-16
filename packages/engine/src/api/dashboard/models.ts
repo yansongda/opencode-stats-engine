@@ -251,16 +251,20 @@ export function createModelErrorsHandler(db: Database) {
       Record<string, unknown>
     >;
 
-    const errors: DashboardModelError[] = rows.map((row) => ({
-      message_id: String(row.message_id),
-      session_id: String(row.session_id),
-      error_detail: row.error_detail
+    const errors: DashboardModelError[] = rows.map((row) => {
+      const parsed = row.error_detail
         ? JSON.parse(String(row.error_detail))
-        : null,
-      created_at_ms: toNum(row.created_at_ms),
-      duration_ms: row.duration_ms != null ? toNum(row.duration_ms) : null,
-      total_tokens: toNum(row.total_tokens),
-    }));
+        : null;
+      return {
+        message_id: String(row.message_id),
+        session_id: String(row.session_id),
+        error_type: parsed?.type ?? null,
+        error_message: parsed?.message ?? null,
+        created_at_ms: toNum(row.created_at_ms),
+        duration_ms: row.duration_ms != null ? toNum(row.duration_ms) : null,
+        total_tokens: toNum(row.total_tokens),
+      };
+    });
 
     const data: DashboardModelErrorDetail = {
       model,

@@ -183,8 +183,9 @@ function queryMessages(
     )
     .all(sessionId) as MessageRow[];
 
-  return rows.map(
-    (r): DashboardSessionMessageMetadata => ({
+  return rows.map((r): DashboardSessionMessageMetadata => {
+    const parsed = r.error_detail ? JSON.parse(String(r.error_detail)) : null;
+    return {
       message_id: r.message_id,
       role: r.role as "user" | "assistant",
       model: r.model ?? null,
@@ -193,9 +194,10 @@ function queryMessages(
       files_changed: toNum(r.files_changed),
       duration_ms: r.duration_ms != null ? Number(r.duration_ms) : null,
       has_error: toNum(r.has_error),
-      error_detail: r.error_detail ? JSON.parse(String(r.error_detail)) : null,
-    }),
-  );
+      error_type: parsed?.type ?? null,
+      error_message: parsed?.message ?? null,
+    };
+  });
 }
 
 function queryModelUsage(

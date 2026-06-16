@@ -132,8 +132,10 @@ export interface MessageUpdatedAssistantEvent extends BaseStatsEvent {
   finish_reason?: string;
   /** ← event.properties.info.error ? 1 : 0 */
   has_error: number;
-  /** ← event.properties.info.error ? JSON.stringify({type, message}) : undefined */
-  error_detail?: string;
+  /** ← event.properties.info.error.name */
+  error_type?: string;
+  /** ← event.properties.info.error.data.message */
+  error_message?: string;
 }
 
 /** 工具执行待处理事件（来自 tool.execute.before 钩子） */

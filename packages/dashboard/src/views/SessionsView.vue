@@ -422,7 +422,7 @@
                 <td class="col-right">{{ msg.files_changed > 0 ? msg.files_changed : '\u2014' }}</td>
                 <td class="col-right">{{ formatSessionDuration(msg.duration_ms) }}</td>
                 <td>
-                  <span v-if="msg.has_error" class="badge-deleted">{{ msg.error_detail?.type ?? $t('sessions.errorBadge') }}</span>
+                  <span v-if="msg.has_error" class="badge-deleted">{{ msg.error_type ?? $t('sessions.errorBadge') }}</span>
                   <span v-else class="badge-active">{{ $t('sessions.okBadge') }}</span>
                 </td>
               </tr>

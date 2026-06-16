@@ -143,10 +143,8 @@ export interface DashboardModelsData {
 export interface DashboardModelError {
   message_id: string;
   session_id: string;
-  error_detail: {
-    type: string;
-    message?: string;
-  } | null;
+  error_type: string | null;
+  error_message: string | null;
   created_at_ms: number;
   duration_ms: number | null;
   total_tokens: number;
@@ -282,10 +280,8 @@ export interface DashboardSessionMessageMetadata {
   files_changed: number;
   duration_ms: number | null;
   has_error: number;
-  error_detail: {
-    type: string;
-    message?: string;
-  } | null;
+  error_type: string | null;
+  error_message: string | null;
 }
 
 export interface DashboardSessionModelUsage {

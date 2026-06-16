@@ -221,9 +221,9 @@
                 <tbody>
                   <tr v-for="error in selectedModelError.errors" :key="error.message_id">
                     <td class="col-error-message">
-                      <span class="error-type-badge">{{ error.error_detail?.type ?? '—' }}</span>
-                      <span v-if="error.error_detail?.message" class="error-message-text">
-                        {{ error.error_detail.message }}
+                      <span class="error-type-badge">{{ error.error_type ?? '—' }}</span>
+                      <span v-if="error.error_message" class="error-message-text">
+                        {{ error.error_message }}
                       </span>
                     </td>
                     <td>{{ formatTimestamp(error.created_at_ms) }}</td>

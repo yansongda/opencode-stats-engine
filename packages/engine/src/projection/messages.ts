@@ -145,7 +145,12 @@ function handleMessageUpdatedAssistant(
       event.duration_ms ?? null,
       event.finish_reason ?? null,
       event.has_error,
-      event.error_detail ?? null,
+      event.error_type
+        ? JSON.stringify({
+            type: event.error_type,
+            message: event.error_message,
+          })
+        : null,
     ],
   );
 }

@@ -248,8 +248,8 @@ export function createModelErrorsHandler(db: Database) {
          LIMIT 100`,
       )
       .all(model, timeRange.start, timeRange.end) as Array<
-        Record<string, unknown>
-      >;
+      Record<string, unknown>
+    >;
 
     const errors: DashboardModelError[] = rows.map((row) => ({
       message_id: String(row.message_id),

@@ -23,7 +23,10 @@ import type { Hono } from "hono";
 import type { SSEBroadcaster } from "../../sse/broadcaster";
 
 import { createEfficiencyHandler } from "./efficiency";
-import { createModelsDashboardHandler, createModelErrorsHandler } from "./models";
+import {
+  createModelErrorsHandler,
+  createModelsDashboardHandler,
+} from "./models";
 import { createOverviewDashboardHandler } from "./overview";
 import { createProjectsDashboardHandler } from "./projects";
 import { createDashboardSessionsHandler } from "./sessions";
@@ -42,7 +45,10 @@ export function createDashboardHandler(db: Database): RouteRegistrar {
     app.get("/api/v1/dashboard/overview", createOverviewDashboardHandler(db));
     app.get("/api/v1/dashboard/efficiency", createEfficiencyHandler(db));
     app.get("/api/v1/dashboard/models", createModelsDashboardHandler(db));
-    app.get("/api/v1/dashboard/models/:model/errors", createModelErrorsHandler(db));
+    app.get(
+      "/api/v1/dashboard/models/:model/errors",
+      createModelErrorsHandler(db),
+    );
     app.get("/api/v1/dashboard/projects", createProjectsDashboardHandler(db));
     app.get("/api/v1/dashboard/tools", createDashboardToolsHandler(db));
     app.get("/api/v1/dashboard/sessions", createDashboardSessionsHandler(db));

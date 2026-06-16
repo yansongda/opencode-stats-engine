@@ -170,11 +170,14 @@ const enUS = {
     yLabelSessions: "Sessions",
     messageDistribution: "Message Distribution",
     modelTokenDistribution: "Model Token Distribution",
-    modelTokenDistributionSubtitle: "Top 15 projects by messages, top 6 models per project",
+    modelTokenDistributionSubtitle:
+      "Top 15 projects by messages, top 6 models per project",
     modelMessageDistribution: "Model Message Distribution",
-    modelMessageDistributionSubtitle: "Top 15 projects by messages, top 6 models per project",
+    modelMessageDistributionSubtitle:
+      "Top 15 projects by messages, top 6 models per project",
     modelSessionDistribution: "Model Session Distribution",
-    modelSessionDistributionSubtitle: "Top 15 projects by messages, top 6 models per project",
+    modelSessionDistributionSubtitle:
+      "Top 15 projects by messages, top 6 models per project",
   },
 
   // ── Tools page ──────────────────────────────────────────────────────

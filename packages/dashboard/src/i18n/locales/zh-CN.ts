@@ -167,11 +167,14 @@ const zhCN = {
     yLabelSessions: "会话数",
     messageDistribution: "消息分布",
     modelTokenDistribution: "模型 Token 分布",
-    modelTokenDistributionSubtitle: "展示消息最多的 15 个项目，每项目前 6 个模型",
+    modelTokenDistributionSubtitle:
+      "展示消息最多的 15 个项目，每项目前 6 个模型",
     modelMessageDistribution: "模型消息分布",
-    modelMessageDistributionSubtitle: "展示消息最多的 15 个项目，每项目前 6 个模型",
+    modelMessageDistributionSubtitle:
+      "展示消息最多的 15 个项目，每项目前 6 个模型",
     modelSessionDistribution: "模型会话分布",
-    modelSessionDistributionSubtitle: "展示消息最多的 15 个项目，每项目前 6 个模型",
+    modelSessionDistributionSubtitle:
+      "展示消息最多的 15 个项目，每项目前 6 个模型",
   },
 
   // ── Tools page ──────────────────────────────────────────────────────

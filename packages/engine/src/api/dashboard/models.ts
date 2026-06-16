@@ -10,6 +10,8 @@
 import type { Database } from "bun:sqlite";
 import type {
   DashboardModelCostTrendPoint,
+  DashboardModelError,
+  DashboardModelErrorDetail,
   DashboardModelItem,
   DashboardModelsData,
 } from "@opencode-stats/shared";
@@ -209,6 +211,60 @@ export function createModelsDashboardHandler(db: Database) {
     const data: DashboardModelsData = {
       models,
       cost_trend: costTrend,
+    };
+
+    return c.json({ data });
+  };
+}
+
+export function createModelErrorsHandler(db: Database) {
+  return (c: Context) => {
+    const model = c.req.param("model");
+    if (!model) {
+      return c.json({ error: "Model parameter is required" }, 400);
+    }
+
+    const timeRange = parseTimeRange(c.req.query("start"), c.req.query("end"));
+    if (!timeRange.ok) {
+      return c.json({ error: timeRange.error }, 400);
+    }
+
+    const rows = db
+      .query(
+        `SELECT
+           message_id,
+           session_id,
+           error_detail,
+           created_at_ms,
+           duration_ms,
+           total_tokens
+         FROM messages
+         WHERE model = ?
+           AND has_error = 1
+           AND role = 'assistant'
+           AND created_at_ms >= ?
+           AND created_at_ms <= ?
+         ORDER BY created_at_ms DESC
+         LIMIT 100`,
+      )
+      .all(model, timeRange.start, timeRange.end) as Array<
+        Record<string, unknown>
+      >;
+
+    const errors: DashboardModelError[] = rows.map((row) => ({
+      message_id: String(row.message_id),
+      session_id: String(row.session_id),
+      error_detail: row.error_detail
+        ? JSON.parse(String(row.error_detail))
+        : null,
+      created_at_ms: toNum(row.created_at_ms),
+      duration_ms: row.duration_ms != null ? toNum(row.duration_ms) : null,
+      total_tokens: toNum(row.total_tokens),
+    }));
+
+    const data: DashboardModelErrorDetail = {
+      model,
+      errors,
     };
 
     return c.json({ data });

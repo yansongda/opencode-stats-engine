@@ -20,7 +20,12 @@ export const convert = (
       : undefined;
 
   const has_error = info.error ? 1 : 0;
-  const error_type = info.error?.name;
+  const error_detail = info.error
+    ? JSON.stringify({
+        type: info.error.name,
+        message: info.error.data?.message,
+      })
+    : undefined;
 
   const model = info.modelID
     ? `${info.providerID ?? "unknown"}/${info.modelID}`
@@ -42,7 +47,7 @@ export const convert = (
       duration_ms,
       finish_reason: info.finish,
       has_error,
-      error_type,
+      error_detail,
     },
   ];
 };

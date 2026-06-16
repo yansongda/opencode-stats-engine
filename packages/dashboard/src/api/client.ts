@@ -1,6 +1,7 @@
 import type {
   DashboardDataResponse,
   DashboardEfficiencyData,
+  DashboardModelErrorDetail,
   DashboardModelsData,
   DashboardOverviewData,
   DashboardProjectsData,
@@ -25,6 +26,7 @@ export type {
   DashboardEfficiencySummary,
   DashboardEfficiencyTimelinePoint,
   DashboardModelCostTrendPoint,
+  DashboardModelErrorDetail,
   DashboardModelItem,
   DashboardModelsData,
   DashboardOverviewData,
@@ -146,6 +148,20 @@ export function fetchDashboardModels(
       start,
       end,
       tz: getBrowserTimezone(),
+    },
+  ).then((r) => r.data);
+}
+
+export function fetchModelErrorDetail(
+  model: string,
+  start?: number,
+  end?: number,
+): Promise<DashboardModelErrorDetail> {
+  return getJson<DashboardDataResponse<DashboardModelErrorDetail>>(
+    `/api/v1/dashboard/models/${encodeURIComponent(model)}/errors`,
+    {
+      start,
+      end,
     },
   ).then((r) => r.data);
 }

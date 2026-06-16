@@ -42,7 +42,7 @@ function handleMessageUpdatedUser(
       input_tokens, output_tokens, reasoning_tokens, cache_read, cache_write, total_tokens,
       cost_usd, lines_added, lines_deleted, files_changed,
       created_at_ms, completed_at_ms, duration_ms,
-      finish_reason, has_error, error_type
+      finish_reason, has_error, error_detail
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(message_id) DO UPDATE SET
       input_tokens = excluded.input_tokens,
@@ -59,7 +59,7 @@ function handleMessageUpdatedUser(
       duration_ms = excluded.duration_ms,
       finish_reason = excluded.finish_reason,
       has_error = excluded.has_error,
-      error_type = excluded.error_type
+      error_detail = excluded.error_detail
     WHERE excluded.created_at_ms >= messages.created_at_ms`,
     [
       event.message_id,
@@ -84,7 +84,7 @@ function handleMessageUpdatedUser(
       null, // 持续时长
       null, // 完成原因
       0, // 是否有错误
-      null, // 错误类型
+      null, // 错误详情
     ],
   );
 }
@@ -103,7 +103,7 @@ function handleMessageUpdatedAssistant(
       input_tokens, output_tokens, reasoning_tokens, cache_read, cache_write, total_tokens,
       cost_usd, lines_added, lines_deleted, files_changed,
       created_at_ms, completed_at_ms, duration_ms,
-      finish_reason, has_error, error_type
+      finish_reason, has_error, error_detail
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(message_id) DO UPDATE SET
       input_tokens = excluded.input_tokens,
@@ -120,7 +120,7 @@ function handleMessageUpdatedAssistant(
       duration_ms = excluded.duration_ms,
       finish_reason = excluded.finish_reason,
       has_error = excluded.has_error,
-      error_type = excluded.error_type
+      error_detail = excluded.error_detail
     WHERE excluded.created_at_ms >= messages.created_at_ms`,
     [
       event.message_id,
@@ -145,7 +145,7 @@ function handleMessageUpdatedAssistant(
       event.duration_ms ?? null,
       event.finish_reason ?? null,
       event.has_error,
-      event.error_type ?? null,
+      event.error_detail ?? null,
     ],
   );
 }

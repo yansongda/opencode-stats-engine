@@ -138,6 +138,15 @@ const enUS = {
     yLabelOutputToken: "Output Tokens",
     seriesSessions: "Sessions",
     seriesMessages: "Messages",
+    errorDetailTitle: "Error Details",
+    errorDetailLoading: "Loading error details...",
+    colErrorMessage: "Error Message",
+    colErrorTime: "Occurred At",
+    colErrorDuration: "Duration",
+    colErrorTokens: "Tokens",
+    colErrorSession: "Session ID",
+    noErrors: "No error records",
+    close: "Close",
   },
 
   // ── Projects page ───────────────────────────────────────────────────

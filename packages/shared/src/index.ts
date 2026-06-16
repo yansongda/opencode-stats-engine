@@ -13,6 +13,8 @@ export type {
   DashboardEfficiencySummary,
   DashboardEfficiencyTimelinePoint,
   DashboardModelCostTrendPoint,
+  DashboardModelError,
+  DashboardModelErrorDetail,
   DashboardModelItem,
   DashboardModelsData,
   DashboardOverviewData,

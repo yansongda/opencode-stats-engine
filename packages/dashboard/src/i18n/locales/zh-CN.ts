@@ -136,6 +136,15 @@ const zhCN = {
     yLabelOutputToken: "输出 Token",
     seriesSessions: "会话数",
     seriesMessages: "消息数",
+    errorDetailTitle: "错误详情",
+    errorDetailLoading: "加载错误详情...",
+    colErrorMessage: "错误信息",
+    colErrorTime: "发生时间",
+    colErrorDuration: "耗时",
+    colErrorTokens: "Token 数",
+    colErrorSession: "会话 ID",
+    noErrors: "暂无错误记录",
+    close: "关闭",
   },
 
   // ── Projects page ───────────────────────────────────────────────────

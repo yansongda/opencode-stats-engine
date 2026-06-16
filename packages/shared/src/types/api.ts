@@ -140,6 +140,23 @@ export interface DashboardModelsData {
   cost_trend: DashboardModelCostTrendPoint[];
 }
 
+export interface DashboardModelError {
+  message_id: string;
+  session_id: string;
+  error_detail: {
+    type: string;
+    message?: string;
+  } | null;
+  created_at_ms: number;
+  duration_ms: number | null;
+  total_tokens: number;
+}
+
+export interface DashboardModelErrorDetail {
+  model: string;
+  errors: DashboardModelError[];
+}
+
 // -- 4. GET /api/v1/dashboard/projects ---------------------------------------
 
 export interface DashboardProjectItem {
@@ -265,7 +282,10 @@ export interface DashboardSessionMessageMetadata {
   files_changed: number;
   duration_ms: number | null;
   has_error: number;
-  error_type: string | null;
+  error_detail: {
+    type: string;
+    message?: string;
+  } | null;
 }
 
 export interface DashboardSessionModelUsage {

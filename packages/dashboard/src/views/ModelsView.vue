@@ -82,7 +82,11 @@
             <td class="col-right">{{ formatCost(m.cost_usd) }}</td>
             <td class="col-right">{{ formatCost(m.avg_cost_per_message ?? 0) }}</td>
             <td class="col-right">
-              <span class="error-rate" :class="errorRateClass(m)">
+              <span 
+                class="error-rate clickable" 
+                :class="errorRateClass(m)"
+                @click="openErrorDetail(m)"
+              >
                 {{ formatErrorRate(m) }}
               </span>
             </td>
@@ -157,6 +161,83 @@
         :y-value-formatter="formatTokens"
       />
     </div>
+
+    <!-- Error Detail Drawer -->
+    <div
+      v-if="selectedModelError !== null || errorDetailLoading"
+      class="detail-drawer-shell"
+      data-testid="error-detail-drawer"
+    >
+      <button
+        class="detail-backdrop"
+        type="button"
+        @click="closeErrorDetail"
+      />
+      <aside class="detail-drawer">
+        <div v-if="errorDetailLoading" class="detail-loading" data-testid="error-detail-loading">
+          {{ $t('models.errorDetailLoading') }}
+        </div>
+        <template v-else-if="selectedModelError">
+          <div class="detail-header">
+            <h2 class="detail-title">
+              {{ $t('models.errorDetailTitle') }}
+              <code class="detail-model">{{ selectedModelError.model }}</code>
+            </h2>
+            <button class="btn btn-ghost btn-sm" @click="closeErrorDetail">
+              {{ $t('models.close') }}
+            </button>
+          </div>
+
+          <!-- Error Summary -->
+          <div class="detail-section">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('models.messageErrorRate') }}</span>
+                <span class="detail-value">{{ formatErrorRate(selectedModelError) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">{{ $t('models.messageErrorRate') }}</span>
+                <span class="detail-value">{{ selectedModelError.error_count }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Detail Table -->
+          <div class="detail-section">
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th class="col-error-message">{{ $t('models.colErrorMessage') }}</th>
+                    <th>{{ $t('models.colErrorTime') }}</th>
+                    <th>{{ $t('models.colErrorDuration') }}</th>
+                    <th>{{ $t('models.colErrorTokens') }}</th>
+                    <th>{{ $t('models.colErrorSession') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="error in selectedModelError.errors" :key="error.message_id">
+                    <td class="col-error-message">
+                      <span class="error-type-badge">{{ error.error_detail?.type ?? '—' }}</span>
+                      <span v-if="error.error_detail?.message" class="error-message-text">
+                        {{ error.error_detail.message }}
+                      </span>
+                    </td>
+                    <td>{{ formatTimestamp(error.created_at_ms) }}</td>
+                    <td>{{ formatDuration(error.duration_ms) }}</td>
+                    <td>{{ formatTokens(error.total_tokens) }}</td>
+                    <td class="col-monospace">{{ truncateSessionId(error.session_id) }}</td>
+                  </tr>
+                  <tr v-if="selectedModelError.errors.length === 0">
+                    <td colspan="5" class="empty-row">{{ $t('models.noErrors') }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </template>
+      </aside>
+    </div>
     </template>
   </div>
 </template>
@@ -164,7 +245,8 @@
 <script setup lang="ts">
 import { computed, onActivated, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import type { DashboardModelItem } from "@/api/client";
+import type { DashboardModelItem, DashboardModelErrorDetail } from "@/api/client";
+import { fetchModelErrorDetail } from "@/api/client";
 import BarChart from "@/charts/BarChart.vue";
 import ScatterChart from "@/charts/ScatterChart.vue";
 import EmptyState from "@/components/EmptyState.vue";
@@ -176,6 +258,7 @@ import { getChartColors } from "@/utils/chartColors";
 import { formatCost, formatNumber, formatTokens } from "@/utils/format";
 import {
   formatBucketLocal,
+  formatRelativeTimeFromDate,
   getRangeMs,
   type TimeRange,
 } from "@/utils/timezone";
@@ -248,6 +331,54 @@ const sortedModels = computed(() => {
 // ── Theme-aware chart colors ───────────────────────────────────────────
 const { resolvedTheme } = useTheme();
 const chartColors = computed(() => getChartColors(resolvedTheme.value));
+
+// ── Error Detail Drawer ─────────────────────────────────────────────────
+interface ModelWithError extends DashboardModelItem {
+  errors: DashboardModelErrorDetail["errors"];
+}
+
+const selectedModelError = ref<ModelWithError | null>(null);
+const errorDetailLoading = ref(false);
+
+async function openErrorDetail(model: DashboardModelItem): Promise<void> {
+  if (model.error_count === 0) return;
+  
+  errorDetailLoading.value = true;
+  selectedModelError.value = null;
+  
+  try {
+    const { start, end } = getRangeMs(selectedPeriod.value);
+    const detail = await fetchModelErrorDetail(model.model, start, end);
+    selectedModelError.value = {
+      ...model,
+      errors: detail.errors,
+    };
+  } catch (err) {
+    console.error("Failed to fetch error detail:", err);
+  } finally {
+    errorDetailLoading.value = false;
+  }
+}
+
+function closeErrorDetail(): void {
+  selectedModelError.value = null;
+}
+
+function formatTimestamp(ms: number): string {
+  return formatRelativeTimeFromDate(new Date(ms));
+}
+
+function formatDuration(ms: number | null): string {
+  if (ms === null || ms === undefined) return "—";
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  return `${(ms / 60000).toFixed(1)}m`;
+}
+
+function truncateSessionId(id: string): string {
+  if (id.length <= 12) return id;
+  return `${id.slice(0, 6)}...${id.slice(-6)}`;
+}
 
 const tokenChartLabels = computed(() => store.models.value.map((m) => m.model));
 
@@ -511,6 +642,172 @@ function errorRateClass(m: DashboardModelItem): string {
 .chart-card-subtitle {
   font-size: var(--text-xs);
   color: var(--text-muted);
+}
+
+/* ── Error Rate Clickable ────────────────────────────────────────────── */
+.error-rate.clickable {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
+.error-rate.clickable:hover {
+  text-decoration-style: solid;
+}
+
+/* ── Detail Drawer ──────────────────────────────────────────────────── */
+.detail-drawer-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.detail-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: var(--overlay-bg);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.detail-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(960px, 90vw);
+  height: 100%;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  overflow-y: auto;
+  pointer-events: auto;
+}
+
+.detail-loading {
+  padding: var(--spacing-6);
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.detail-model {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: var(--text-sm);
+  color: var(--primary);
+  background: var(--primary-subtle);
+  padding: 1px var(--spacing-2);
+  border-radius: var(--radius-sm);
+}
+
+.detail-section {
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-section:last-child {
+  border-bottom: none;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--spacing-3);
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.detail-label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detail-value {
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* ── Error Table ─────────────────────────────────────────────────────── */
+.col-error-message {
+  text-align: left;
+  max-width: 400px;
+}
+
+.error-type-badge {
+  display: inline-block;
+  padding: 1px var(--spacing-2);
+  background: var(--danger-subtle);
+  color: var(--danger);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  margin-right: var(--spacing-2);
+}
+
+.error-message-text {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
+.col-monospace {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: var(--text-xs);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.btn-ghost:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.btn-sm {
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--text-xs);
 }
 
 </style>

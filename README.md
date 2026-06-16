@@ -118,23 +118,6 @@ bun run biome:fix-unsafe
 
 ![Dashboard 会话列表](assets/images/dashboard/sessions.png)
 
-## 发布检查清单
-
-发布到 npm 前执行：
-
-```bash
-bun run prepublishOnly
-npm pack --dry-run
-```
-
-`prepublishOnly` 会按顺序运行 `biome:check`、`typecheck`、`test`、`build:dashboard` 和 `build`。检查 `npm pack --dry-run` 输出，确认包内包含 `packages/plugin/dist/`、`packages/dashboard/dist/`、`README.md`、`LICENSE` 和 `package.json`，且不包含测试源码、仪表盘源码、`node_modules` 或本地依赖目录。
-
-确认无误后发布：
-
-```bash
-npm publish --access public
-```
-
 ## 许可证
 
 MIT

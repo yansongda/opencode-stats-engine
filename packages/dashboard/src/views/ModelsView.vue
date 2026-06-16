@@ -164,7 +164,7 @@
 
     <!-- Error Detail Drawer -->
     <div
-      v-if="selectedModelError !== null || errorDetailLoading"
+      v-if="selectedModelError !== null || errorDetailLoading || errorDetailError"
       class="detail-drawer-shell"
       data-testid="error-detail-drawer"
     >
@@ -176,6 +176,9 @@
       <aside class="detail-drawer">
         <div v-if="errorDetailLoading" class="detail-loading" data-testid="error-detail-loading">
           {{ $t('models.errorDetailLoading') }}
+        </div>
+        <div v-else-if="errorDetailError" class="detail-loading" data-testid="error-detail-error">
+          <p class="detail-error-message">{{ errorDetailError }}</p>
         </div>
         <template v-else-if="selectedModelError">
           <div class="detail-header">
@@ -245,7 +248,10 @@
 <script setup lang="ts">
 import { computed, onActivated, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import type { DashboardModelItem, DashboardModelErrorDetail } from "@/api/client";
+import type {
+  DashboardModelErrorDetail,
+  DashboardModelItem,
+} from "@/api/client";
 import { fetchModelErrorDetail } from "@/api/client";
 import BarChart from "@/charts/BarChart.vue";
 import ScatterChart from "@/charts/ScatterChart.vue";
@@ -255,13 +261,20 @@ import TimeRangePicker from "@/components/TimeRangePicker.vue";
 import { useTheme } from "@/composables/useTheme";
 import { useModelsStore } from "@/stores/models";
 import { getChartColors } from "@/utils/chartColors";
-import { formatCost, formatNumber, formatTokens } from "@/utils/format";
+import {
+  formatCost,
+  formatDuration,
+  formatNumber,
+  formatPercent,
+  formatTokens,
+} from "@/utils/format";
 import {
   formatBucketLocal,
   formatRelativeTimeFromDate,
   getRangeMs,
   type TimeRange,
 } from "@/utils/timezone";
+import { truncateSessionId } from "@/utils/truncate";
 
 // ── Store ──────────────────────────────────────────────────────────────
 const store = useModelsStore();
@@ -339,13 +352,15 @@ interface ModelWithError extends DashboardModelItem {
 
 const selectedModelError = ref<ModelWithError | null>(null);
 const errorDetailLoading = ref(false);
+const errorDetailError = ref<string | null>(null);
 
 async function openErrorDetail(model: DashboardModelItem): Promise<void> {
   if (model.error_count === 0) return;
-  
+
   errorDetailLoading.value = true;
+  errorDetailError.value = null;
   selectedModelError.value = null;
-  
+
   try {
     const { start, end } = getRangeMs(selectedPeriod.value);
     const detail = await fetchModelErrorDetail(model.model, start, end);
@@ -355,6 +370,7 @@ async function openErrorDetail(model: DashboardModelItem): Promise<void> {
     };
   } catch (err) {
     console.error("Failed to fetch error detail:", err);
+    errorDetailError.value = err instanceof Error ? err.message : String(err);
   } finally {
     errorDetailLoading.value = false;
   }
@@ -362,22 +378,11 @@ async function openErrorDetail(model: DashboardModelItem): Promise<void> {
 
 function closeErrorDetail(): void {
   selectedModelError.value = null;
+  errorDetailError.value = null;
 }
 
 function formatTimestamp(ms: number): string {
   return formatRelativeTimeFromDate(new Date(ms));
-}
-
-function formatDuration(ms: number | null): string {
-  if (ms === null || ms === undefined) return "—";
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-  return `${(ms / 60000).toFixed(1)}m`;
-}
-
-function truncateSessionId(id: string): string {
-  if (id.length <= 12) return id;
-  return `${id.slice(0, 6)}...${id.slice(-6)}`;
 }
 
 const tokenChartLabels = computed(() => store.models.value.map((m) => m.model));
@@ -481,8 +486,7 @@ const scatterData = computed(() =>
 
 // ── Formatting Helpers ─────────────────────────────────────────────────
 function formatErrorRate(m: DashboardModelItem): string {
-  if (m.error_rate === null || m.error_rate === undefined) return "—";
-  return `${(m.error_rate * 100).toFixed(1)}%`;
+  return formatPercent(m.error_rate);
 }
 
 function errorRateClass(m: DashboardModelItem): string {
@@ -691,6 +695,11 @@ function errorRateClass(m: DashboardModelItem): string {
   text-align: center;
   color: var(--text-muted);
   font-style: italic;
+}
+
+.detail-error-message {
+  color: var(--error);
+  margin: 0;
 }
 
 .detail-header {

@@ -59,6 +59,39 @@
       />
     </section>
 
+    <!-- Bottom Row: Error Distribution + Average Duration Overview -->
+    <div class="bottom-row resp-two-col" data-testid="tools-charts">
+      <!-- Error Distribution Pie -->
+      <section class="section bottom-section">
+        <h2 class="section-title">{{ $t('tools.errorDistribution') }}</h2>
+        <div v-if="errorPieData.length === 0" class="chart-empty">
+          {{ $t('tools.noErrorData') }}
+        </div>
+        <PieChart
+          v-else
+          :data="errorPieData"
+          height="280px"
+          :donut="true"
+          :show-label="true"
+        />
+      </section>
+
+      <!-- Average Duration Overview -->
+      <section class="section bottom-section">
+        <h2 class="section-title">{{ $t('tools.avgDurationOverview') }}</h2>
+        <div v-if="durationHistData.length === 0" class="chart-empty">
+          {{ $t('tools.noDurationData') }}
+        </div>
+        <BarChart
+          v-else
+          :x-data="durationLabels"
+          :series="durationSeries"
+          height="280px"
+          :y-label="$t('tools.yLabelToolCount')"
+        />
+      </section>
+    </div>
+
     <!-- Tool Ranking Table -->
     <section class="section" data-testid="tools-ranking">
       <h2 class="section-title">{{ $t('tools.usageRanking') }}</h2>
@@ -106,39 +139,6 @@
         </table>
       </div>
     </section>
-
-    <!-- Bottom Row: Error Distribution + Average Duration Overview -->
-    <div class="bottom-row resp-two-col" data-testid="tools-charts">
-      <!-- Error Distribution Pie -->
-      <section class="section bottom-section">
-        <h2 class="section-title">{{ $t('tools.errorDistribution') }}</h2>
-        <div v-if="errorPieData.length === 0" class="chart-empty">
-          {{ $t('tools.noErrorData') }}
-        </div>
-        <PieChart
-          v-else
-          :data="errorPieData"
-          height="280px"
-          :donut="true"
-          :show-label="true"
-        />
-      </section>
-
-      <!-- Average Duration Overview -->
-      <section class="section bottom-section">
-        <h2 class="section-title">{{ $t('tools.avgDurationOverview') }}</h2>
-        <div v-if="durationHistData.length === 0" class="chart-empty">
-          {{ $t('tools.noDurationData') }}
-        </div>
-        <BarChart
-          v-else
-          :x-data="durationLabels"
-          :series="durationSeries"
-          height="280px"
-          :y-label="$t('tools.yLabelToolCount')"
-        />
-      </section>
-    </div>
 
     <!-- Recent Errors -->
     <section class="section" data-testid="tools-recent-errors">
@@ -192,13 +192,14 @@ import TimeRangePicker from "@/components/TimeRangePicker.vue";
 import { useTheme } from "@/composables/useTheme";
 import { useToolsStore } from "@/stores/tools";
 import { getChartColors } from "@/utils/chartColors";
-import { formatNumber } from "@/utils/format";
+import { formatDuration, formatNumber, formatPercent } from "@/utils/format";
 import {
   formatBucketLocal,
   formatTimestampShort,
   getRangeMs,
   type TimeRange,
 } from "@/utils/timezone";
+import { truncateId } from "@/utils/truncate";
 
 // ── Store ──────────────────────────────────────────────────────────
 
@@ -390,24 +391,10 @@ const durationSeries = computed(() => [
 
 // ── Formatters ───────────────────────────────────────────────────────
 
-function formatPercent(rate: number): string {
-  return `${(rate * 100).toFixed(1)}%`;
-}
-
-function formatDuration(ms: number): string {
-  if (ms < 1000) return `${Math.round(ms)}ms`;
-  return `${(ms / 1000).toFixed(1)}s`;
-}
-
 function rateClass(errorRate: number): string {
   if (errorRate <= 0.05) return "rate-good";
   if (errorRate <= 0.2) return "rate-warn";
   return "rate-bad";
-}
-
-function truncateId(id: string): string {
-  if (id.length <= 12) return id;
-  return `${id.slice(0, 8)}…`;
 }
 </script>
 

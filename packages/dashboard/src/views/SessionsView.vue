@@ -208,7 +208,7 @@
 
     <!-- Session Detail Drawer -->
     <div
-      v-if="selectedSessionId || detailLoading || selectedDetail"
+      v-if="selectedSessionId || detailLoading || selectedDetail || detailError"
       class="detail-drawer-shell"
       data-testid="session-detail-drawer"
     >
@@ -220,6 +220,9 @@
       />
       <aside class="detail-drawer" :aria-label="$t('sessions.detailAriaLabel')">
         <div v-if="detailLoading" class="detail-loading" data-testid="session-detail-loading">{{ $t('sessions.detailLoading') }}</div>
+        <div v-else-if="detailError" class="detail-loading" data-testid="session-detail-error">
+          <p class="detail-error-message">{{ detailError }}</p>
+        </div>
         <template v-else-if="selectedDetail">
       <div class="detail-header">
         <h2 class="detail-title">
@@ -250,7 +253,7 @@
           </div>
           <div class="detail-item">
             <span class="detail-label">{{ $t('sessions.labelDuration') }}</span>
-            <span class="detail-value">{{ formatDuration(selectedDetail.session.duration_ms) }}</span>
+            <span class="detail-value">{{ formatSessionDuration(selectedDetail.session.duration_ms) }}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">{{ $t('sessions.labelMessageCount') }}</span>
@@ -387,7 +390,7 @@
                     {{ tc.status ?? '\u2014' }}
                   </span>
                 </td>
-                <td class="col-right">{{ formatDuration(tc.duration_ms) }}</td>
+                <td class="col-right">{{ formatSessionDuration(tc.duration_ms) }}</td>
                 <td class="col-error-msg">{{ tc.error_message ?? '\u2014' }}</td>
               </tr>
             </tbody>
@@ -417,9 +420,9 @@
                 <td class="col-right">{{ formatTokens(msg.total_tokens) }}</td>
                 <td class="col-right">{{ formatCost(msg.cost_usd) }}</td>
                 <td class="col-right">{{ msg.files_changed > 0 ? msg.files_changed : '\u2014' }}</td>
-                <td class="col-right">{{ formatDuration(msg.duration_ms) }}</td>
+                <td class="col-right">{{ formatSessionDuration(msg.duration_ms) }}</td>
                 <td>
-                  <span v-if="msg.has_error" class="badge-deleted">{{ msg.error_type ?? $t('sessions.errorBadge') }}</span>
+                  <span v-if="msg.has_error" class="badge-deleted">{{ msg.error_detail?.type ?? $t('sessions.errorBadge') }}</span>
                   <span v-else class="badge-active">{{ $t('sessions.okBadge') }}</span>
                 </td>
               </tr>
@@ -476,8 +479,15 @@ import CollapsibleSection from "@/components/CollapsibleSection.vue";
 import EmptyState from "@/components/EmptyState.vue";
 import LoadingState from "@/components/LoadingState.vue";
 import { useSessionsStore } from "@/stores/sessions";
-import { formatCost, formatNumber, formatTokens } from "@/utils/format";
+import {
+  createDurationI18n,
+  formatCost,
+  formatDuration,
+  formatNumber,
+  formatTokens,
+} from "@/utils/format";
 import { formatTimestamp, parseLocalDateInput } from "@/utils/timezone";
+import { truncateProject, truncateSessionId } from "@/utils/truncate";
 
 // ── i18n ────────────────────────────────────────────────────────────────
 
@@ -699,17 +709,22 @@ const visiblePages = computed(() => {
 const selectedSessionId = ref<string | null>(null);
 const selectedDetail = ref<DashboardSessionDetailData | null>(null);
 const detailLoading = ref(false);
+const detailError = ref<string | null>(null);
 
 function closeDetail(): void {
   selectedSessionId.value = null;
   selectedDetail.value = null;
   detailLoading.value = false;
+  detailError.value = null;
 }
 
 function handleDetailKeydown(event: KeyboardEvent): void {
   if (
     event.key === "Escape" &&
-    (selectedSessionId.value || selectedDetail.value || detailLoading.value)
+    (selectedSessionId.value ||
+      selectedDetail.value ||
+      detailLoading.value ||
+      detailError.value)
   ) {
     closeDetail();
   }
@@ -722,14 +737,17 @@ async function selectSession(sessionId: string): Promise<void> {
   }
   selectedSessionId.value = sessionId;
   selectedDetail.value = null;
+  detailError.value = null;
   detailLoading.value = true;
   try {
     const detail = await fetchDashboardSessionDetail(sessionId);
     if (selectedSessionId.value === sessionId) {
       selectedDetail.value = detail;
     }
-  } catch {
-    selectedDetail.value = null;
+  } catch (err) {
+    if (selectedSessionId.value === sessionId) {
+      detailError.value = err instanceof Error ? err.message : String(err);
+    }
   } finally {
     if (selectedSessionId.value === sessionId) {
       detailLoading.value = false;
@@ -750,27 +768,17 @@ function resetFilters(): void {
 
 // ── Formatters ───────────────────────────────────────────────────────
 
-function truncateProject(path: string): string {
-  if (path.length <= 30) return path;
-  return `\u2026${path.slice(-28)}`;
-}
+const sessionsDurationI18n = createDurationI18n(t, {
+  sec: "sessions.durationSec",
+  minSec: "sessions.durationMinSec",
+  hourMin: "sessions.durationHourMin",
+  minutes: "sessions.durationMinSec",
+  hours: "sessions.durationHourMin",
+  hoursMin: "sessions.durationHourMin",
+});
 
-function truncateSessionId(id: string): string {
-  if (id.length <= 16) return id;
-  return `${id.slice(0, 12)}\u2026`;
-}
-
-function formatDuration(ms: number | null): string {
-  if (ms == null) return "\u2014";
-  if (ms < 1000) return `${ms}ms`;
-  const sec = Math.floor(ms / 1000);
-  if (sec < 60) return t("sessions.durationSec", { sec });
-  const min = Math.floor(sec / 60);
-  const remainSec = sec % 60;
-  if (min < 60) return t("sessions.durationMinSec", { min, sec: remainSec });
-  const hour = Math.floor(min / 60);
-  const remainMin = min % 60;
-  return t("sessions.durationHourMin", { hour, min: remainMin });
+function formatSessionDuration(ms: number | null | undefined): string {
+  return formatDuration(ms, { precision: "ms", i18n: sessionsDurationI18n });
 }
 
 // ── StatusBadge Component ─────────────────────────────────────────────
@@ -1118,6 +1126,12 @@ const StatusBadge = {
   text-align: center;
   color: var(--text-muted);
   font-style: italic;
+}
+
+.detail-error-message {
+  color: var(--error);
+  margin: 0;
+  font-style: normal;
 }
 
 .detail-header {

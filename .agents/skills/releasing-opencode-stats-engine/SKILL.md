@@ -40,7 +40,8 @@ graph TD
     P --> Q{User says push?}
     Q -->|No| R[Wait...]
     Q -->|Yes| S[git push origin main --tags]
-    S --> T[Done]
+    S --> T[Delete release branch]
+    T --> U[Done]
 ```
 
 ## Step-by-Step Instructions
@@ -185,6 +186,20 @@ Awaiting your approval to: git push origin main --tags
 git push origin main --tags
 ```
 
+### Step 10: Cleanup Release Branch
+
+After successful push, delete the release branch (local and remote):
+
+```bash
+# Delete remote branch
+git push origin --delete release/vX.Y.Z
+
+# Delete local branch
+git branch -d release/vX.Y.Z
+```
+
+**Branch naming convention:** `release/vX.Y.Z` (e.g., `release/v1.0.0`)
+
 ## Anti-Patterns & Rationalizations
 
 | Excuse | Reality |
@@ -230,4 +245,7 @@ Agent: [shows full summary]
 Agent: Awaiting your approval to: git push origin main --tags
 User: push
 Agent: [pushes] Done.
+Agent: Cleaning up release branch...
+Agent: [deletes local and remote release/v1.0.0-beta.6 branch]
+Agent: Release complete.
 ```

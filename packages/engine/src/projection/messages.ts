@@ -42,7 +42,7 @@ function handleMessageUpdatedUser(
       input_tokens, output_tokens, reasoning_tokens, cache_read, cache_write, total_tokens,
       cost_usd, lines_added, lines_deleted, files_changed,
       created_at_ms, completed_at_ms, duration_ms,
-      finish_reason, has_error, error_detail
+      finish_reason, has_error, error
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(message_id) DO UPDATE SET
       input_tokens = excluded.input_tokens,
@@ -59,7 +59,7 @@ function handleMessageUpdatedUser(
       duration_ms = excluded.duration_ms,
       finish_reason = excluded.finish_reason,
       has_error = excluded.has_error,
-      error_detail = excluded.error_detail
+      error = excluded.error
     WHERE excluded.created_at_ms >= messages.created_at_ms`,
     [
       event.message_id,
@@ -103,7 +103,7 @@ function handleMessageUpdatedAssistant(
       input_tokens, output_tokens, reasoning_tokens, cache_read, cache_write, total_tokens,
       cost_usd, lines_added, lines_deleted, files_changed,
       created_at_ms, completed_at_ms, duration_ms,
-      finish_reason, has_error, error_detail
+      finish_reason, has_error, error
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(message_id) DO UPDATE SET
       input_tokens = excluded.input_tokens,
@@ -120,7 +120,7 @@ function handleMessageUpdatedAssistant(
       duration_ms = excluded.duration_ms,
       finish_reason = excluded.finish_reason,
       has_error = excluded.has_error,
-      error_detail = excluded.error_detail
+      error = excluded.error
     WHERE excluded.created_at_ms >= messages.created_at_ms`,
     [
       event.message_id,

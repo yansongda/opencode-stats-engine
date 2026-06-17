@@ -38,7 +38,7 @@ interface MessageRow {
   files_changed: number;
   duration_ms: number | null;
   has_error: number;
-  error_detail: string | null;
+  error: string | null;
 }
 
 interface ToolCallRow {
@@ -176,7 +176,7 @@ function queryMessages(
          message_id, role, model,
          total_tokens, cost_usd,
          files_changed, duration_ms,
-         has_error, error_detail
+         has_error, error
        FROM messages
        WHERE session_id = ?
        ORDER BY created_at_ms ASC`,
@@ -184,7 +184,7 @@ function queryMessages(
     .all(sessionId) as MessageRow[];
 
   return rows.map((r): DashboardSessionMessageMetadata => {
-    const parsed = r.error_detail ? JSON.parse(String(r.error_detail)) : null;
+    const parsed = r.error ? JSON.parse(String(r.error)) : null;
     return {
       message_id: r.message_id,
       role: r.role as "user" | "assistant",
@@ -319,15 +319,15 @@ function queryErrors(db: Database, sessionId: string): DashboardSessionError[] {
   // 3. Message errors from messages table
   const messageErrors = db
     .query(
-      `SELECT message_id, event_id, error_detail, created_at_ms
+      `SELECT message_id, event_id, error, created_at_ms
        FROM messages
        WHERE session_id = ? AND has_error = 1`,
     )
     .all(sessionId) as Array<Record<string, unknown>>;
 
   for (const row of messageErrors) {
-    const errorDetail = row.error_detail
-      ? JSON.parse(String(row.error_detail))
+    const errorDetail = row.error
+      ? JSON.parse(String(row.error))
       : null;
     const errorType = errorDetail?.type ?? "unknown";
     errors.push({

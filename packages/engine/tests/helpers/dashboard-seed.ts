@@ -14,7 +14,7 @@ export function seedDashboardData(db: Database): void {
       (message_id, event_id, session_id, project_path, model, role, agent,
        input_tokens, output_tokens, reasoning_tokens, cache_read, cache_write, total_tokens,
        cost_usd, lines_added, lines_deleted, files_changed,
-       created_at_ms, completed_at_ms, duration_ms, finish_reason, has_error, error_detail)
+       created_at_ms, completed_at_ms, duration_ms, finish_reason, has_error, error)
      VALUES
       ('msg_user_1', 'evt_user_1', 'ses_1', '/repo-a', NULL, 'user', 'coder',
        0, 0, 0, 0, 0, 0,

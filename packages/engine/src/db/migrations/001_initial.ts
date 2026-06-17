@@ -67,7 +67,7 @@ export function up(db: Database): void {
       duration_ms       INTEGER,               -- 持续时长
       finish_reason     TEXT,                  -- 完成原因
       has_error         INTEGER DEFAULT 0,     -- 是否有错误
-      error_detail      TEXT,                  -- 错误详情 JSON: { type, message }
+      error             TEXT,                  -- 错误详情 JSON: { type, message }
       created_at        DATETIME DEFAULT CURRENT_TIMESTAMP  -- 创建时间
     )
   `);

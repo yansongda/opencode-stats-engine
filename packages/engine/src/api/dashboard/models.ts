@@ -234,7 +234,7 @@ export function createModelErrorsHandler(db: Database) {
         `SELECT
            message_id,
            session_id,
-           error_detail,
+           error,
            created_at_ms,
            duration_ms,
            total_tokens
@@ -252,8 +252,8 @@ export function createModelErrorsHandler(db: Database) {
     >;
 
     const errors: DashboardModelError[] = rows.map((row) => {
-      const parsed = row.error_detail
-        ? JSON.parse(String(row.error_detail))
+      const parsed = row.error
+        ? JSON.parse(String(row.error))
         : null;
       return {
         message_id: String(row.message_id),

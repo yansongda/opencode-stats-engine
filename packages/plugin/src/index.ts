@@ -149,7 +149,7 @@ class StatsPluginInstance {
     this.projectionEngine = new ProjectionEngine(this.db);
     this.broadcaster = new SSEBroadcaster({
       onError: (error, clientId) => {
-        this.log("error", `SSE client ${clientId}: ${error.message}`, error);
+        this.log("warn", `SSE client ${clientId}: ${error.message}`, error);
       },
     });
     this.projectionEngine.registerHandler(sessionHandler);

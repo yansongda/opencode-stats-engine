@@ -1,7 +1,7 @@
 import { appendFileSync } from "node:fs";
 
 export type Logger = (
-  level: "info" | "error",
+  level: "info" | "warn" | "error",
   msg: string,
   err?: unknown,
 ) => void;

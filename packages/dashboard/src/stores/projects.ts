@@ -3,10 +3,10 @@ import {
   type DashboardProjectActivityTrendPoint,
   type DashboardProjectItem,
   type DashboardProjectModelUsageItem,
+  type DashboardProjectsData,
   fetchDashboardProjects,
 } from "@/api/client";
-import i18n from "@/i18n";
-import { getRangeMs, type TimeRange } from "@/utils/timezone";
+import { createFetchWrapper } from "./createFetchWrapper";
 
 const projects = ref<DashboardProjectItem[]>([]) as Ref<DashboardProjectItem[]>;
 const activityTrend = ref<DashboardProjectActivityTrendPoint[]>([]) as Ref<
@@ -15,81 +15,33 @@ const activityTrend = ref<DashboardProjectActivityTrendPoint[]>([]) as Ref<
 const projectModelUsage = ref<DashboardProjectModelUsageItem[]>([]) as Ref<
   DashboardProjectModelUsageItem[]
 >;
-const loading = ref(false) as Ref<boolean>;
-const error = ref<string | null>(null) as Ref<string | null>;
-const lastFetchedAt = ref<number | null>(null) as Ref<number | null>;
 
-const lastParams = ref<{
-  start?: number;
-  end?: number;
-  params?: { sort?: string; order?: "asc" | "desc" };
-  range?: TimeRange;
-} | null>(null);
+type ProjectsParams = { sort?: string; order?: "asc" | "desc" };
 
-export async function fetchProjects(
-  start?: number,
-  end?: number,
-  params?: { sort?: string; order?: "asc" | "desc" },
-  options?: { silent?: boolean; range?: TimeRange },
-): Promise<boolean> {
-  const silent = options?.silent === true;
-  const _hasArgs =
-    start !== undefined ||
-    end !== undefined ||
-    params !== undefined ||
-    options !== undefined;
-  const isSilentOnlyRefresh =
-    options !== undefined &&
-    start === undefined &&
-    end === undefined &&
-    params === undefined;
-
-  if (_hasArgs && !isSilentOnlyRefresh) {
-    lastParams.value = { start, end, params, range: options?.range };
-  } else if (isSilentOnlyRefresh && lastParams.value) {
-    lastParams.value.range = options?.range;
-    const range = getRangeMs(lastParams.value.range ?? "7d");
-    start = range.start;
-    end = range.end;
-    params = lastParams.value.params;
-  } else if (lastParams.value?.range) {
-    const range = getRangeMs(lastParams.value.range);
-    start = range.start;
-    end = range.end;
-    params = lastParams.value.params;
-  } else if (lastParams.value) {
-    start = lastParams.value.start;
-    end = lastParams.value.end;
-    params = lastParams.value.params;
-  }
-
-  if (!silent) {
-    loading.value = true;
-    error.value = null;
-  }
-  try {
-    const data = await fetchDashboardProjects(start, end, params);
+const {
+  loading,
+  error,
+  lastFetchedAt,
+  fetch: fetchProjects,
+} = createFetchWrapper<DashboardProjectsData, ProjectsParams>({
+  apiFn: fetchDashboardProjects,
+  assignData: (data) => {
     projects.value = data.projects;
     activityTrend.value = data.activity_trend;
     projectModelUsage.value = data.project_model_usage;
-    lastFetchedAt.value = Date.now();
-    return true;
-  } catch (err) {
-    if (silent) {
-      console.warn("[silent fetch] projects failed:", err);
-    } else {
-      error.value =
-        err instanceof Error
-          ? err.message
-          : i18n.global.t("common.errorLoadProjects");
-    }
-    return false;
-  } finally {
-    if (!silent) {
-      loading.value = false;
-    }
-  }
-}
+  },
+  errorKey: "common.errorLoadProjects",
+});
+
+export {
+  activityTrend,
+  error,
+  fetchProjects,
+  lastFetchedAt,
+  loading,
+  projectModelUsage,
+  projects,
+};
 
 export function useProjectsStore() {
   return {

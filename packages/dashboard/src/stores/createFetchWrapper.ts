@@ -53,7 +53,7 @@ export function createFetchWrapper<TData, TParams = void>(
     } else if (
       paramsOrOptions &&
       typeof paramsOrOptions === "object" &&
-      "silent" in paramsOrOptions
+      ("silent" in paramsOrOptions || "range" in paramsOrOptions)
     ) {
       options = paramsOrOptions as {
         silent?: boolean;

@@ -252,9 +252,7 @@ export function createModelErrorsHandler(db: Database) {
     >;
 
     const errors: DashboardModelError[] = rows.map((row) => {
-      const parsed = row.error
-        ? JSON.parse(String(row.error))
-        : null;
+      const parsed = row.error ? JSON.parse(String(row.error)) : null;
       return {
         message_id: String(row.message_id),
         session_id: String(row.session_id),

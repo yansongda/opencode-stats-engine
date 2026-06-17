@@ -326,9 +326,7 @@ function queryErrors(db: Database, sessionId: string): DashboardSessionError[] {
     .all(sessionId) as Array<Record<string, unknown>>;
 
   for (const row of messageErrors) {
-    const errorDetail = row.error
-      ? JSON.parse(String(row.error))
-      : null;
+    const errorDetail = row.error ? JSON.parse(String(row.error)) : null;
     const errorType = errorDetail?.type ?? "unknown";
     errors.push({
       event_id: String(row.event_id),

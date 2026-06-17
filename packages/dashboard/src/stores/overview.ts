@@ -57,6 +57,11 @@ export async function fetchOverview(
 
   if (_hasArgs && !isSilentOnlyRefresh) {
     lastParams.value = { start, end, range: options?.range };
+  } else if (isSilentOnlyRefresh && lastParams.value) {
+    lastParams.value.range = options?.range;
+    const range = getRangeMs(lastParams.value.range ?? "7d");
+    start = range.start;
+    end = range.end;
   } else if (lastParams.value?.range) {
     const range = getRangeMs(lastParams.value.range);
     start = range.start;

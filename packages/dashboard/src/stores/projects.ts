@@ -46,6 +46,12 @@ export async function fetchProjects(
 
   if (_hasArgs && !isSilentOnlyRefresh) {
     lastParams.value = { start, end, params, range: options?.range };
+  } else if (isSilentOnlyRefresh && lastParams.value) {
+    lastParams.value.range = options?.range;
+    const range = getRangeMs(lastParams.value.range ?? "7d");
+    start = range.start;
+    end = range.end;
+    params = lastParams.value.params;
   } else if (lastParams.value?.range) {
     const range = getRangeMs(lastParams.value.range);
     start = range.start;

@@ -152,8 +152,8 @@ const props = withDefaults(
     height: "300px",
     autoresize: true,
     theme: undefined,
-  loading: false,
-  loadingOptions: undefined,
+    loading: false,
+    loadingOptions: undefined,
   },
 );
 

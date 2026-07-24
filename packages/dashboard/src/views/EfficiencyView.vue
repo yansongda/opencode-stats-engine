@@ -71,9 +71,29 @@
         <span class="chart-card-title">{{ $t('efficiency.tokenCostTrend') }}</span>
         <span class="chart-card-subtitle">{{ $t('efficiency.tokenCostTrendSubtitle') }}</span>
       </div>
+      <div
+        v-if="timelineLegendItems.length > 1"
+        class="shared-legend"
+      >
+        <button
+          v-for="item in timelineLegendItems"
+          :key="item.name"
+          type="button"
+          class="legend-item"
+          :class="{ 'legend-item--hidden': hiddenTimelineModels.has(item.name) }"
+          :aria-pressed="!hiddenTimelineModels.has(item.name)"
+          @click="toggleTimelineModel(item.name)"
+        >
+          <span
+            class="legend-dot"
+            :style="{ backgroundColor: item.color }"
+          />
+          {{ item.name }}
+        </button>
+      </div>
       <LineChart
         :x-data="timelineLabels"
-        :series="timelineTokenSeries"
+        :series="filteredTimelineTokenSeries"
         height="260px"
         y-label="Token"
         :right-y-label="$t('efficiency.costLabel')"
@@ -89,9 +109,29 @@
         <span class="chart-card-title">{{ $t('efficiency.codeChangeTrend') }}</span>
         <span class="chart-card-subtitle">{{ $t('efficiency.codeChangeTrendSubtitle') }}</span>
       </div>
+      <div
+        v-if="codeChangesLegendItems.length > 1"
+        class="shared-legend"
+      >
+        <button
+          v-for="item in codeChangesLegendItems"
+          :key="item.name"
+          type="button"
+          class="legend-item"
+          :class="{ 'legend-item--hidden': hiddenCodeChangesModels.has(item.name) }"
+          :aria-pressed="!hiddenCodeChangesModels.has(item.name)"
+          @click="toggleCodeChangeModel(item.name)"
+        >
+          <span
+            class="legend-dot"
+            :style="{ backgroundColor: item.color }"
+          />
+          {{ item.name }}
+        </button>
+      </div>
       <LineChart
         :x-data="timelineLabels"
-        :series="codeChangesSeries"
+        :series="filteredCodeChangesSeries"
         height="260px"
         :show-area="true"
         :smooth="true"
@@ -172,6 +212,8 @@ onActivated(() => {
 
 // User-initiated period change → refetch
 watch(selectedPeriod, () => {
+  hiddenTimelineModels.value = new Set();
+  hiddenCodeChangesModels.value = new Set();
   fetchData();
 });
 
@@ -290,6 +332,42 @@ const tokenCostTooltipFormatter = (params: unknown): string => {
   return `<div style="font-size:12px">${header ? `<div style="margin-bottom:4px">${header}</div>` : ""}${lines.join("<br>")}</div>`;
 };
 
+// ── Legend Toggle State ──────────────────────────────────────────────
+const hiddenTimelineModels = ref<Set<string>>(new Set());
+const hiddenCodeChangesModels = ref<Set<string>>(new Set());
+
+const timelineLegendItems = computed(() =>
+  timelineTokenSeries.value.map((s) => ({ name: s.name, color: s.color })),
+);
+const codeChangesLegendItems = computed(() =>
+  codeChangesSeries.value.map((s) => ({ name: s.name, color: s.color })),
+);
+
+const filteredTimelineTokenSeries = computed(() =>
+  timelineTokenSeries.value.filter(
+    (s) => !hiddenTimelineModels.value.has(s.name),
+  ),
+);
+const filteredCodeChangesSeries = computed(() =>
+  codeChangesSeries.value.filter(
+    (s) => !hiddenCodeChangesModels.value.has(s.name),
+  ),
+);
+
+function toggleTimelineModel(name: string): void {
+  const next = new Set(hiddenTimelineModels.value);
+  if (next.has(name)) next.delete(name);
+  else next.add(name);
+  hiddenTimelineModels.value = next;
+}
+
+function toggleCodeChangeModel(name: string): void {
+  const next = new Set(hiddenCodeChangesModels.value);
+  if (next.has(name)) next.delete(name);
+  else next.add(name);
+  hiddenCodeChangesModels.value = next;
+}
+
 // ── Code Changes ───────────────────────────────────────────────────
 
 const codeChangesSeries = computed(() => {
@@ -369,6 +447,47 @@ const codeChangesSeries = computed(() => {
 .chart-card-subtitle {
   font-size: var(--text-xs);
   color: var(--text-muted);
+}
+
+/* ── Shared Legend ──────────────────────────────────────────────────── */
+
+.shared-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2) var(--spacing-3);
+  justify-content: center;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  transition: opacity 0.15s ease;
+}
+
+.legend-item:hover {
+  opacity: 0.8;
+}
+
+.legend-item--hidden {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 /* ── Chart Row ────────────────────────────────────────────────────── */

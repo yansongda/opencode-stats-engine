@@ -100,9 +100,25 @@
           <span class="chart-card-title">{{ $t('projects.activityTrend') }}</span>
           <span class="chart-card-subtitle">{{ $t('projects.activityTrendSubtitle') }}</span>
         </div>
+        <div
+          v-if="trendLegendItems.length > 1"
+          class="shared-legend"
+        >
+          <button
+            v-for="item in trendLegendItems"
+            :key="item.name"
+            type="button"
+            class="legend-item"
+            :class="{ dimmed: hiddenTrendProjects.has(item.name) }"
+            @click="toggleTrendProject(item.name)"
+          >
+            <span class="legend-dot" :style="{ background: item.color }" />
+            <span class="legend-label">{{ item.name }}</span>
+          </button>
+        </div>
         <LineChart
           :x-data="trendDateLabels"
-          :series="trendSeries"
+          :series="filteredTrendSeries"
           :loading="store.loading.value"
           height="280px"
           :y-label="$t('projects.yLabelMessages')"
@@ -110,7 +126,6 @@
           :tooltip-formatter="trendTooltipFormatter"
           :smooth="true"
           :show-area="true"
-          :show-legend="true"
         />
       </div>
     </div>
@@ -231,6 +246,8 @@ function refreshData(): void {
 }
 
 watch(selectedPeriod, () => {
+  hiddenModels.value = new Set();
+  hiddenTrendProjects.value = new Set();
   refreshWithSort();
 });
 
@@ -416,6 +433,7 @@ const modelProjectNames = computed(() => rankedProjects.value);
 
 /** Hidden models toggle (replaced as new Set for Vue reactivity). */
 const hiddenModels = ref<Set<string>>(new Set());
+const hiddenTrendProjects = ref<Set<string>>(new Set());
 
 function toggleModel(name: string): void {
   const next = new Set(hiddenModels.value);
@@ -425,6 +443,24 @@ function toggleModel(name: string): void {
     next.add(name);
   }
   hiddenModels.value = next;
+}
+
+const trendLegendItems = computed(() =>
+  trendSeries.value.map((s) => ({ name: s.name, color: s.color })),
+);
+
+const filteredTrendSeries = computed(() =>
+  trendSeries.value.filter((s) => !hiddenTrendProjects.value.has(s.name)),
+);
+
+function toggleTrendProject(name: string): void {
+  const next = new Set(hiddenTrendProjects.value);
+  if (next.has(name)) {
+    next.delete(name);
+  } else {
+    next.add(name);
+  }
+  hiddenTrendProjects.value = next;
 }
 
 type ModelUsageItem = {

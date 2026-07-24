@@ -72,7 +72,6 @@ const props = withDefaults(
 // ── Chart Option ───────────────────────────────────────────────────
 
 const hasDualAxis = computed(() => !!props.rightYLabel);
-const showLegend = computed(() => props.showLegend || props.series.length > 1);
 
 const chartOption = computed<EChartsOption | null>(() => {
   if (props.xData.length === 0 || props.series.length === 0) return null;
@@ -155,14 +154,13 @@ const chartOption = computed<EChartsOption | null>(() => {
           : {}),
     },
     legend: {
-      show: showLegend.value,
-      top: 0,
+      show: false,
     },
     grid: {
       left: "3%",
       right: rightGap,
       bottom: "3%",
-      top: showLegend.value ? 40 : 20,
+      top: 20,
       containLabel: true,
     },
     xAxis: {

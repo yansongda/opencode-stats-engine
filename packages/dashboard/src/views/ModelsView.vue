@@ -137,9 +137,29 @@
         <h3 class="chart-card-title">{{ $t('models.costComparison') }}</h3>
         <span class="chart-card-subtitle">{{ $t('models.costComparisonSubtitle') }}</span>
       </div>
+      <div
+        v-if="costLegendItems.length > 1"
+        class="shared-legend"
+      >
+        <button
+          v-for="item in costLegendItems"
+          :key="item.name"
+          type="button"
+          class="legend-item"
+          :class="{ 'legend-item--hidden': hiddenCostModels.has(item.name) }"
+          :aria-pressed="!hiddenCostModels.has(item.name)"
+          @click="toggleCostModel(item.name)"
+        >
+          <span
+            class="legend-dot"
+            :style="{ backgroundColor: item.color }"
+          />
+          {{ item.name }}
+        </button>
+      </div>
       <BarChart
         :x-data="costChartLabels"
-        :series="costChartSeries"
+        :series="filteredCostChartSeries"
         height="280px"
         y-label="USD"
         :value-formatter="formatCost"
@@ -294,7 +314,10 @@ function retry(): void {
   fetchCurrentPeriod();
 }
 
-watch(selectedPeriod, () => fetchCurrentPeriod());
+watch(selectedPeriod, () => {
+  hiddenCostModels.value = new Set();
+  fetchCurrentPeriod();
+});
 
 onMounted(() => {
   if (store.models.value.length === 0) fetchCurrentPeriod();
@@ -445,6 +468,27 @@ const costChartSeries = computed(() => {
     color: chartColors.value[i % chartColors.value.length],
   }));
 });
+
+// ── Cost Legend Toggle ──────────────────────────────────────────────
+const hiddenCostModels = ref<Set<string>>(new Set());
+
+const costLegendItems = computed(() =>
+  costChartSeries.value.map((s) => ({ name: s.name, color: s.color })),
+);
+
+const filteredCostChartSeries = computed(() =>
+  costChartSeries.value.filter((s) => !hiddenCostModels.value.has(s.name)),
+);
+
+function toggleCostModel(name: string): void {
+  const next = new Set(hiddenCostModels.value);
+  if (next.has(name)) {
+    next.delete(name);
+  } else {
+    next.add(name);
+  }
+  hiddenCostModels.value = next;
+}
 
 // ── Chart Data: Message/Session Comparison ────────────────────────────
 const messageSessionChartLabels = computed(() =>
@@ -611,6 +655,47 @@ function errorRateClass(m: DashboardModelItem): string {
   color: var(--danger);
 }
 
+/* ── Shared Legend ──────────────────────────────────────────────────── */
+
+.shared-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2) var(--spacing-3);
+  justify-content: center;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  transition: opacity 0.15s ease;
+}
+
+.legend-item:hover {
+  opacity: 0.8;
+}
+
+.legend-item--hidden {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 /* ── Charts Grid ────────────────────────────────────────────────────── */
 .charts-grid {
   /* Grid handled by .resp-two-col utility */
@@ -763,10 +848,15 @@ function errorRateClass(m: DashboardModelItem): string {
   color: var(--text);
 }
 
+
+
 /* ── Error Table ─────────────────────────────────────────────────────── */
 .col-error-message {
   text-align: left;
-  max-width: 400px;
+  max-width: 500px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .error-type-badge {
@@ -778,6 +868,11 @@ function errorRateClass(m: DashboardModelItem): string {
   font-size: var(--text-xs);
   font-weight: 500;
   margin-right: var(--spacing-2);
+}
+
+.error-message-text {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
 }
 
 .error-message-text {

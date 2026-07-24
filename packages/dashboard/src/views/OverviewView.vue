@@ -83,21 +83,41 @@
                 />
             </div>
 
-            <!-- Usage Trend (dual y-axis: Token left, Messages right) -->
-            <div class="trend-section" data-testid="trend-section">
-                <h3 class="section-title">{{ $t('overview.usageTrend') }}</h3>
-                <LineChart
-                    :x-data="trendDates"
-                    :series="trendSeries"
-                    height="260px"
-                    :smooth="true"
-                    :show-area="true"
-                    y-label="Token"
-                    :value-formatter="formatTokens"
-                    :right-y-label="$t('overview.messages')"
-                    :right-value-formatter="formatNumber"
-                />
-            </div>
+             <!-- Usage Trend (dual y-axis: Token left, Messages right) -->
+             <div class="trend-section" data-testid="trend-section">
+                 <h3 class="section-title">{{ $t('overview.usageTrend') }}</h3>
+                 <div
+                     v-if="trendLegendItems.length > 1"
+                     class="shared-legend"
+                 >
+                     <button
+                         v-for="item in trendLegendItems"
+                         :key="item.name"
+                         type="button"
+                         class="legend-item"
+                         :class="{ 'legend-item--hidden': hiddenTrendModels.has(item.name) }"
+                         :aria-pressed="!hiddenTrendModels.has(item.name)"
+                         @click="toggleTrendModel(item.name)"
+                     >
+                         <span
+                             class="legend-dot"
+                             :style="{ backgroundColor: item.color }"
+                         />
+                         {{ item.name }}
+                     </button>
+                 </div>
+                 <LineChart
+                     :x-data="trendDates"
+                     :series="filteredTrendSeries"
+                     height="260px"
+                     :smooth="true"
+                     :show-area="true"
+                     y-label="Token"
+                     :value-formatter="formatTokens"
+                     :right-y-label="$t('overview.messages')"
+                     :right-value-formatter="formatNumber"
+                 />
+             </div>
 
             <!-- Working Hour Heatmap -->
             <div class="chart-card" data-testid="working-hour-heatmap">
@@ -329,7 +349,12 @@ function fetchIfStale(): void {
   }
 }
 
-watch(selectedPeriod, () => doFetch());
+watch(selectedPeriod, () => {
+  hiddenModels.value = new Set();
+  hiddenProjects.value = new Set();
+  hiddenTrendModels.value = new Set();
+  doFetch();
+});
 
 // ── Derived Data ───────────────────────────────────────────────────
 
@@ -396,6 +421,7 @@ const trendSeries = computed(() => [
 
 const hiddenModels = ref<Set<string>>(new Set());
 const hiddenProjects = ref<Set<string>>(new Set());
+const hiddenTrendModels = ref<Set<string>>(new Set());
 
 function toggleModel(name: string): void {
   const next = new Set(hiddenModels.value);
@@ -410,6 +436,21 @@ function toggleProject(name: string): void {
   else next.add(name);
   hiddenProjects.value = next;
 }
+
+function toggleTrendModel(name: string): void {
+  const next = new Set(hiddenTrendModels.value);
+  if (next.has(name)) next.delete(name);
+  else next.add(name);
+  hiddenTrendModels.value = next;
+}
+
+const trendLegendItems = computed(() =>
+  trendSeries.value.map((s) => ({ name: s.name, color: s.color })),
+);
+
+const filteredTrendSeries = computed(() =>
+  trendSeries.value.filter((s) => !hiddenTrendModels.value.has(s.name)),
+);
 
 // ── Model Distribution ─────────────────────────────────────────────
 

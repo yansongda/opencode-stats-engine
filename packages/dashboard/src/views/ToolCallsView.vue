@@ -48,15 +48,36 @@
       <div v-if="trendDisplayLabels.length === 0" class="chart-empty">
         {{ $t('tools.noTrendData') }}
       </div>
-      <LineChart
-        v-else
-        :x-data="trendDisplayLabels"
-        :series="trendSeries"
-        height="280px"
-        :smooth="true"
-        :show-area="true"
-        :y-label="$t('tools.yLabelCallCount')"
-      />
+      <template v-else>
+        <div
+          v-if="trendLegendItems.length > 1"
+          class="shared-legend"
+        >
+          <button
+            v-for="item in trendLegendItems"
+            :key="item.name"
+            type="button"
+            class="legend-item"
+            :class="{ 'legend-item--hidden': hiddenTrendTools.has(item.name) }"
+            :aria-pressed="!hiddenTrendTools.has(item.name)"
+            @click="toggleTrendTool(item.name)"
+          >
+            <span
+              class="legend-dot"
+              :style="{ backgroundColor: item.color }"
+            />
+            {{ item.name }}
+          </button>
+        </div>
+        <LineChart
+          :x-data="trendDisplayLabels"
+          :series="filteredTrendSeries"
+          height="280px"
+          :smooth="true"
+          :show-area="true"
+          :y-label="$t('tools.yLabelCallCount')"
+        />
+      </template>
     </section>
 
     <!-- Bottom Row: Error Distribution + Average Duration Overview -->
@@ -256,6 +277,7 @@ onActivated(() => {
 });
 
 watch(selectedPeriod, () => {
+  hiddenTrendTools.value = new Set();
   fetchData();
 });
 
@@ -329,6 +351,24 @@ const trendSeries = computed(() => {
     },
   ];
 });
+
+// ── Legend Toggle State ──────────────────────────────────────────────
+const hiddenTrendTools = ref<Set<string>>(new Set());
+
+const trendLegendItems = computed(() =>
+  trendSeries.value.map((s) => ({ name: s.name, color: s.color })),
+);
+
+const filteredTrendSeries = computed(() =>
+  trendSeries.value.filter((s) => !hiddenTrendTools.value.has(s.name)),
+);
+
+function toggleTrendTool(name: string): void {
+  const next = new Set(hiddenTrendTools.value);
+  if (next.has(name)) next.delete(name);
+  else next.add(name);
+  hiddenTrendTools.value = next;
+}
 
 // ── Error Pie Data ───────────────────────────────────────────────────
 
@@ -599,6 +639,47 @@ function rateClass(errorRate: number): string {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: var(--spacing-4);
+}
+
+/* ── Shared Legend ──────────────────────────────────────────────────── */
+
+.shared-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2) var(--spacing-3);
+  justify-content: center;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  transition: opacity 0.15s ease;
+}
+
+.legend-item:hover {
+  opacity: 0.8;
+}
+
+.legend-item--hidden {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 /* ── Chart Empty ────────────────────────────────────────────────────── */

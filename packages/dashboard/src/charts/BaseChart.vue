@@ -7,7 +7,7 @@
       :autoresize="autoresize"
       :theme="effectiveTheme"
       :loading="loading"
-      :loading-options="loadingOptions"
+      :loading-options="resolvedLoadingOptions"
       :update-options="updateOptions"
     />
     <EmptyState
@@ -152,8 +152,8 @@ const props = withDefaults(
     height: "300px",
     autoresize: true,
     theme: undefined,
-    loading: false,
-    loadingOptions: undefined,
+  loading: false,
+  loadingOptions: undefined,
   },
 );
 
@@ -182,6 +182,17 @@ const chartKey = computed<string>(() => {
   return typeof t === "string" ? t : "custom";
 });
 
+/** Theme-aware loading overlay to prevent white flash in dark mode. */
+const resolvedLoadingOptions = computed<Record<string, unknown>>(() => {
+  if (props.loadingOptions) return props.loadingOptions;
+  const isDark = resolvedTheme.value === "dark";
+  return {
+    maskColor: isDark ? "rgba(15, 23, 42, 0.85)" : "rgba(255, 255, 255, 0.85)",
+    textColor: isDark ? "#94a3b8" : "#64748b",
+    color: isDark ? "#60a5fa" : "#3b82f6",
+  };
+});
+
 // ── Merged Option ──────────────────────────────────────────────────
 
 const mergedOption = computed<EChartsOption>(() => {
@@ -189,6 +200,7 @@ const mergedOption = computed<EChartsOption>(() => {
 
   const isDark = resolvedTheme.value === "dark";
   const textColor = isDark ? CHART_TEXT_COLOR_DARK : CHART_TEXT_COLOR_LIGHT;
+  const canvasBg = isDark ? CHART_TOOLTIP_BG_DARK : CHART_TOOLTIP_BG_LIGHT;
 
   const option = { ...props.option };
 
@@ -224,6 +236,7 @@ const mergedOption = computed<EChartsOption>(() => {
 
   return {
     ...option,
+    backgroundColor: canvasBg,
     textStyle: {
       color: textColor,
     },
@@ -241,6 +254,7 @@ const mergedOption = computed<EChartsOption>(() => {
 const updateOptions = {
   notMerge: false,
   lazyUpdate: true,
+  replaceMerge: ["series"],
 };
 </script>
 
@@ -249,5 +263,7 @@ const updateOptions = {
   width: 100%;
   min-height: 100px;
   position: relative;
+  background-color: var(--surface);
+  border-radius: var(--radius-md);
 }
 </style>

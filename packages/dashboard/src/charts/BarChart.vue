@@ -129,14 +129,13 @@ const chartOption = computed<EChartsOption | null>(() => {
             : {}),
       },
       legend: {
-        show: props.showLegend && props.series.length > 1,
-        top: 0,
+        show: false,
       },
       grid: {
         left: "3%",
         right: "4%",
         bottom: "3%",
-        top: props.showLegend && props.series.length > 1 ? 40 : 20,
+        top: 20,
         containLabel: true,
       },
       xAxis: valueAxis,
@@ -235,14 +234,13 @@ const chartOption = computed<EChartsOption | null>(() => {
           : {}),
     },
     legend: {
-      show: props.showLegend && props.series.length > 1,
-      top: 0,
+      show: false,
     },
     grid: {
       left: "3%",
       right: rightGap,
       bottom: "3%",
-      top: props.showLegend && props.series.length > 1 ? 40 : 20,
+      top: 20,
       containLabel: true,
     },
     xAxis: {
